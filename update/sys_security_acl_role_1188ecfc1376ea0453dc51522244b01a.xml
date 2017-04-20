@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_security_acl_role">
+    <sys_security_acl_role action="INSERT_OR_UPDATE">
+        <sys_class_name>sys_security_acl_role</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-10-28 13:36:41</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>1188ecfc1376ea0453dc51522244b01a</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>x_kasp_orphaned_tr_carrier_values.x_kasp_orphaned_tr_carrier_values_user</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_security_acl display_value="x_kasp_orphaned_tr_carrier_values">9d88ecfc1376ea0453dc51522244b018</sys_security_acl>
+        <sys_update_name>sys_security_acl_role_1188ecfc1376ea0453dc51522244b01a</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2016-10-28 13:36:41</sys_updated_on>
+        <sys_user_role display_value="x_kasp_orphaned_tr_carrier_values_user" name="x_kasp_orphaned_tr_carrier_values_user">a088a0fc1376ea0453dc51522244b0b9</sys_user_role>
+        <transaction_id/>
+    </sys_security_acl_role>
+</record_update>

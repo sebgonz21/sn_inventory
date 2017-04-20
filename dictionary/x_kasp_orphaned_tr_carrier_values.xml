@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database>
+    <element label="Carrier Values" max_length="40" name="x_kasp_orphaned_tr_carrier_values" type="collection">
+        <element label="SN Value" max_length="40" name="sn_value" type="string"/>
+        <element label="Test" max_length="800" name="test" type="data_structure"/>
+        <element label="Values" max_length="800" name="values" type="data_structure"/>
+        <element attributes="edge_encryption_enabled=true" label="Variations" max_length="1000" name="variations" type="string"/>
+    </element>
+</database>

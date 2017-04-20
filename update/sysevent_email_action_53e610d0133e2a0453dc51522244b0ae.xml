@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update sys_domain="global" table="sysevent_email_action">
+    <sysevent_email_action action="INSERT_OR_UPDATE">
+        <action_insert>false</action_insert>
+        <action_update>false</action_update>
+        <active>false</active>
+        <advanced_condition/>
+        <affected_field_on_event/>
+        <collection>u_in_transit_cartons</collection>
+        <condition/>
+        <content_type>text/html</content_type>
+        <description/>
+        <event_name>x_kasp_orphaned_tr.five_day_warning</event_name>
+        <event_parm_1>true</event_parm_1>
+        <event_parm_2>false</event_parm_2>
+        <exclude_delegates>false</exclude_delegates>
+        <force_delivery>false</force_delivery>
+        <from>Open In-Transit</from>
+        <generation_type>event</generation_type>
+        <group/>
+        <group_field/>
+        <importance/>
+        <include_attachments>false</include_attachments>
+        <item>event.parm1</item>
+        <item_table/>
+        <list/>
+        <list_field/>
+        <mandatory>false</mandatory>
+        <message/>
+        <message_html><![CDATA[<p>${mail_script:hello_store_script}</p>
+<p><span style="color: black;">Below you will find cartons on the in transit report that have not been researched.&nbsp; If the cartons are not addressed within the next 48 hours (Not counting weekends) the ticket will be closed.&nbsp; Click on the below carton(s) and follow the required next steps.</span></p>
+<p>${mail_script:in_transit_cartons_email_script}</p>]]></message_html>
+        <message_list/>
+        <message_text/>
+        <name>In Transit - 5 Day Warning</name>
+        <omit_watermark>true</omit_watermark>
+        <order/>
+        <push_message_only>false</push_message_only>
+        <recipient_fields/>
+        <recipient_groups/>
+        <recipient_users>f9bfa7b000515c00779351e27127acff,96e7c5caf58e0100649946d7569884b1</recipient_users>
+        <reply_to/>
+        <send_self>true</send_self>
+        <sms_alternate/>
+        <style/>
+        <subject>Cartons Open In Transit – Final Reminder to Research </subject>
+        <subscribable>false</subscribable>
+        <sys_class_name>sysevent_email_action</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-10-26 23:04:45</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_domain>global</sys_domain>
+        <sys_id>53e610d0133e2a0453dc51522244b0ae</sys_id>
+        <sys_mod_count>13</sys_mod_count>
+        <sys_name>In Transit - 5 Day Warning</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sysevent_email_action_53e610d0133e2a0453dc51522244b0ae</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-03-15 22:04:10</sys_updated_on>
+        <sys_version>2</sys_version>
+        <template/>
+        <type>email</type>
+        <user/>
+        <user_field/>
+        <weight>0</weight>
+    </sysevent_email_action>
+</record_update>

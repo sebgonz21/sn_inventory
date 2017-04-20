@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update sys_domain="global" table="sys_filter">
+    <sys_filter action="INSERT_OR_UPDATE">
+        <filter table="u_shipment_incidents">sys_id=39244d122b9de20045eeaacc17da153a^EQ<item endquery="false" field="sys_id" goto="false" newquery="false" operator="=" or="false" value="39244d122b9de20045eeaacc17da153a"/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter>
+        <group/>
+        <last_used>2016-08-19 18:56:41</last_used>
+        <mobile>true</mobile>
+        <roles/>
+        <sys_class_name>sys_filter</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-08-19 17:58:37</sys_created_on>
+        <sys_customer_update>false</sys_customer_update>
+        <sys_domain>global</sys_domain>
+        <sys_id>632585522b9de20045eeaacc17da15d2</sys_id>
+        <sys_mod_count>29</sys_mod_count>
+        <sys_name>mobile</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_filter_632585522b9de20045eeaacc17da15d2</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2016-08-19 18:56:41</sys_updated_on>
+        <table>u_shipment_incidents</table>
+        <title>mobile</title>
+        <user display_value="Sebastian Gonzalez-Garcia">96e7c5caf58e0100649946d7569884b1</user>
+    </sys_filter>
+</record_update>

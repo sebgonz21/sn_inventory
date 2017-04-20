@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>true</action_insert>
+        <action_label/>
+        <action_name/>
+        <action_query>false</action_query>
+        <action_run_at>server</action_run_at>
+        <action_update>true</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <application/>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>x_kasp_orphaned_tr_in_bound_cartons</collection>
+        <condition/>
+        <description/>
+        <execute_function>false</execute_function>
+        <filter_condition/>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>Process Inbound Carton</name>
+        <onclick/>
+        <order>100</order>
+        <priority>100</priority>
+        <read_access_action>false</read_access_action>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script><![CDATA[(function executeRule(current, previous /*null when async*/) {
+	
+	var carton = current.getValue('carton_id');
+	var status = current.getValue('status');
+	if(status != 'ready'){
+		return;
+	}
+	gs.addInfoMessage('INBOUND INTRANSIT>>> RUNNING RULE');
+	
+	var inTransitRec = new GlideRecord('u_in_transit_cartons');
+	inTransitRec.addQuery('u_status','working')
+		.addOrCondition('u_status','5_day_warning');
+	inTransitRec.addQuery('u_carton_id','#'+carton);
+	inTransitRec.query();
+	
+	while(inTransitRec.next()){
+		gs.info("INBOUND INTRANSIT>>> CLOSING Record with " + inTransitRec.getValue('u_carton_id'));
+		inTransitRec.setValue('u_status','complete_micros');
+		inTransitRec.update();
+	}
+	
+	
+	var inShipmentRec = new GlideRecord('u_shipment_incidents');
+	inShipmentRec.addQuery('u_shp_incident_status','!=','5');
+	inShipmentRec.addQuery('u_shp_incident_status','!=','0');
+	inShipmentRec.addQuery('u_carton_numbers','CONTAINS','#'+carton);
+	
+	inShipmentRec.query();
+	
+	var cartonStr = '';
+	var cartonArr;
+	var confirmedCartons;
+	while(inShipmentRec.next()){
+		
+		cartonStr = inShipmentRec.getValue('u_carton_numbers');
+		cartonArr = cartonStr.split(',');
+		
+		for(var i = 0; i < cartonArr.length; i++){
+			if(('#'+carton) == cartonArr[i]){
+				cartonArr.splice(i,1);
+				break;
+			}
+		}
+		inShipmentRec.setValue('u_carton_numbers',cartonArr.join());
+		inShipmentRec.work_notes = 'Carton ' + carton + ' is no longer in transit';
+		
+		confirmedCartons = inShipmentRec.getValue('u_confirmed_cartons');
+		gs.info('INBOUND INTRANSIT>>> Confirmed cartons ' + confirmedCartons);
+		
+		//if not empty add comma and carton, if empty just add carton
+		confirmedCartons = (confirmedCartons == '' || confirmedCartons == null)? carton:confirmedCartons + ',' + carton;
+		
+		inShipmentRec.setValue('u_confirmed_cartons',confirmedCartons);
+		inShipmentRec.update();
+		
+		
+		if(cartonArr.length <= 0){
+			gs.info("INBOUND INTRANSIT>>> CLOSING SHP Ticket with " + 	inShipmentRec.getValue('number') + " all cartons received");
+			
+			inShipmentRec.setValue('u_carton_numbers','All Cartons received see Work Notes');
+			inShipmentRec.setValue('u_shp_incident_status','5');
+			inShipmentRec.setValue('close_notes','These cartons are no longer in-transit. If you have any questions or concerns please reach out to ks inventory');
+			
+			inShipmentRec.update();
+		}
+		
+	}
+	
+	current.setValue('status','processed');
+	current.update();
+	
+})(current, previous);]]></script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2017-03-20 14:39:15</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_domain>global</sys_domain>
+        <sys_id>b1c199b60f6d7a004789e34be1050e23</sys_id>
+        <sys_mod_count>23</sys_mod_count>
+        <sys_name>Process Inbound Carton</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_script_b1c199b60f6d7a004789e34be1050e23</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-04-14 18:24:58</sys_updated_on>
+        <template/>
+        <when>async</when>
+    </sys_script>
+</record_update>

@@ -1,0 +1,771 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[var inTransitApp = angular.module('inTransitPage', []);
+
+inTransitApp.controller('inTransitController', [
+'$scope',
+'$http',
+function($scope, $http) {
+	$scope.isLoaded = false;
+	$scope.question ="";
+	$scope.quest_yes_msg = "";
+	$scope.question_num = 0;
+	$scope.delivered = false;
+	$scope.questionLoaded = false;
+	$scope.questionStarted = false;
+	$scope.closeRecord = false;
+	$scope.submitTicket = false;
+	
+	$scope.recordSysIds = [];
+	
+	$scope.inYesTransition = false;
+	
+	$scope.carriers = [];
+	
+	$scope.storeSysId = getParmVal('sysparm_store');
+	$scope.carton_id = getParmVal('sysparm_carton');
+	
+	$scope.carton = {
+		store_sys_id: "",
+		u_type_of_issue: 5,
+		u_receiving_store: "NOT PROVIDED",
+		u_carton_id: "NOT PROVIDED",
+		u_carrier: "NOT PROVIDED",
+		u_vendor_id: [],
+		u_vendor_department: "NOT PROVIDED",
+		u_expected_in_store_date: "NOT PROVIDED",
+		u_modification_date: "NOT PROVIDED",
+		u_delivery_status: "NOT PROVIDED",
+		u_invoice: [],
+		u_vendor_flag: "NOT PROVIDED",
+		u_po: [],
+		u_in_transit_type: "NOT PROVIDED",
+		u_tracking_id: "NOT PROVIDED",
+		u_bol_id: "NOT PROVIDED",
+		u_transaction_date:"NOT PROVIDED", //Shipment date
+	};
+	$scope.shipment_inc_num = "";
+	$scope.shipment_inc_link = "https://katespade.service-now.com/u_shipment_incidents.do?sys_id=";
+	
+	$scope.url = '/api/now/table/';
+	$scope.table = 'u_in_transit_cartons';
+	
+	$http.defaults.headers.common.Accept = "application/json";
+	
+	$scope.getCartonRecord = function() {
+		
+		
+		
+		if($scope.carton_id == null){
+			console.log("No carton id");
+			return;
+		}
+		
+		$http({
+			method: 'GET',
+			url: $scope.url+ $scope.table + "?u_carton_id=%23" +  $scope.carton_id,
+			headers: {
+				'X-UserToken': window.g_ck.toString()
+			},
+		}).
+		success( function(data, status) {
+			
+			$scope.isLoaded = true;
+			
+			//console.log("Carton data");
+			//console.log(data.result);
+			
+			if(data.result.length <= 0){
+				$('#main').html('<div class="box"><div class="box-head text-center row"><h4 class="thanks">Could Not Find Record Carton</h4></div><div class="box-body text-center row"><p class="message">Record for Carton ' + $scope.carton_id + ' was not found</p></div></div>');
+				return;
+			}
+			/** Loop through records with same carton num*/
+			for(var i = 0; i < data.result.length; i ++){
+				if(data.result[i].u_status.indexOf('complete') == 0 && data.result[i].u_shipment_ticket == ''){
+					$('#main').html('<div class="box"><div class="box-head text-center row"><h4 class="thanks">Completed!</h4></div><div class="box-body text-center row"><p class="message">You have already completed this carton</p><a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Back To Cartons In-Transit Page'+'</a></div></div>');
+					return;
+				}else if(data.result[i].u_status.indexOf('complete') == 0 && data.result[i].u_shipment_ticket != ''){
+					$scope.getShipmentTicket(data.result[i].u_shipment_ticket,'You have already opened a Shipment Ticket for this carton','In Research');
+				}else if(data.result[i].u_status == 'auto_closed'){
+					$scope.getShipmentTicket(data.result[i].u_shipment_ticket,'This carton has been auto closed and Shipment Incident','Auto Closed');
+					return;
+					
+				}
+				//console.log(">>> RECID " + data.result[i].sys_id);
+				$scope.recordSysIds.push(data.result[i].sys_id);
+				/** Loop through properties of current carton record*/
+				for(var prop in data.result[i]){
+					
+					/** if property starts with u and property in carton record is not empty*/
+					if(prop[0] == 'u' && (data.result[i])[prop] != "" && (data.result[i])[prop] != null){
+						
+						/** If carton property is an array*/
+						if(Array.isArray($scope.carton[prop])){
+							
+							/** If array contains does not contain value in carton record
+ 							*   add value to array
+ 							*/
+							if(!arrayContains($scope.carton[prop],(data.result[i])[prop])){
+								$scope.carton[prop].push((data.result[i])[prop]);
+							}
+						}else{
+							/** if property is not an array set it to carton property*/
+							$scope.carton[prop] = (data.result[i])[prop];
+							
+						}
+						
+					}
+				}
+				
+				//console.log($scope.carton.u_carton_id  + " invo " + data.result[i].u_invoice + " size " + $scope.carton.u_invoice.length);
+				
+			}
+			
+			/** Set delivery status*/
+			if($scope.carton.u_delivery_status == 'A'){
+				$scope.delivered = true;
+			}
+			
+			$scope.carton.u_receiving_store = $scope.carton.u_receiving_store.substring(1);
+			
+			/** Check if store is outlet or specialty*/
+			if($scope.carton.u_receiving_store[0] == "3"){
+				$scope.carton.channel = "Specialty";
+				//console.log("Store is Specialty");
+			}else if($scope.carton.u_receiving_store[0] == "1"){
+				$scope.carton.channel = "Outlet";
+				//console.log("Store is Outlet");
+			}
+			
+			/** Check if carton is from Vendor and set assigment group*/
+			if($scope.carton.u_vendor_flag == "Y"){
+				$scope.carton.u_type_of_issue = 6;
+			}else{
+				if($scope.carton.u_in_transit_type == "W2S"){
+					$scope.carton.u_type_of_issue = 5;	
+				}else if($scope.carton.u_in_transit_type == "S2S"){
+					$scope.carton.u_type_of_issue = 9;
+				}else{
+					$scope.carton.u_type_of_issue = 6;
+				}
+			}
+		}).
+		error ( function(data, status) {
+			$scope.carton = {"u_carton_id": "Error fetching list"};
+			$('#main').html('<div class="box"><div class="box-head text-center row"><h4 class="thanks">Could Not Find Record Carton</h4></div><div class="box-body text-center row"><p class="message">Record for Carton ' + $scope.carton_id + ' was not found</p><a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Back To Cartons In-Transit Page'+'</a></div></div>');
+		});
+		
+	};
+	
+	$scope.getCarriers = function(){
+		
+		$http({
+			method: 'GET',
+			url: $scope.url+ "x_kasp_orphaned_tr_carrier_values",
+			headers: {
+				'X-UserToken': window.g_ck.toString()
+			},
+		}).success(function(data,status){
+			var carrier = {
+				sn_val:"",
+				values:[]
+			};
+			var val_arr;
+			
+			for(var i = 0; i < data.result.length; i++){
+				carrier.sn_val = data.result[i].sn_value;
+				val_arr = data.result[i].variations.split(",");
+				for(var j = 0; j < val_arr.length; j++){
+					carrier.values.push(val_arr[j]);
+				}
+				//gs.info('Added ' + carrier.values.length + " to " + carrier.sn_val);
+				$scope.carriers.push(carrier);
+				carrier= {
+					sn_val:"",
+					values:[]
+				};
+			}
+			
+			//console.log("Found " + $scope.carriers.length + " Carriers");
+		}).error(function(data,status){
+			$scope.carriers[0] = "error getting carriers";
+		});
+	};
+	
+	$scope.nextStep = function($event){
+		
+		var ans = $event.target.id;
+		
+		if(ans == "no"){
+			$scope.nextQuestion();
+			
+		}else if(ans =="yes"){
+			
+			if($scope.quest_yes_msg == "submit shipment ticket"){
+				$scope.question = "Please submit a shipment ticket using the button below and attach the BOL to the ticket by following the link provided";
+				$scope.submitTicket = true;
+				
+			}else{
+				$scope.question = $scope.quest_yes_msg;
+				$scope.question_num++;
+				$scope.closeRecord = true;
+			}
+			$('.chc').each(function(i,obj){
+				
+				$(obj).css('display','none');
+				
+			});
+			$scope.inYesTransition = true;
+		}else if(ans == "next"){
+			
+			if($scope.questionStarted == false){
+				$scope.nextQuestion();
+			}
+		}
+	};
+	
+	$scope.nextQuestion = function(){
+		$scope.questionStarted = true;
+		$scope.getQuestions();
+		
+	};
+	
+	$scope.getQuestions = function() {
+		
+		$scope.questionLoaded = false;
+		
+		$http({
+			method: 'GET',
+			url: $scope.url+ "u_in_transit_questions?sysparm_query=u_order=" + $scope.question_num,
+			headers: {
+				'X-UserToken': window.g_ck.toString()
+			},
+		}).
+		success( function(data, status) {
+			
+			//console.log("RESULTS >>>>>>>>>> "+data.result);
+			
+			if(data.result.length == 0){
+				$scope.questionLoaded = true;
+				$scope.question="All Done";
+				
+				$('.chc').each(function(i,obj){
+					
+					$(obj).css('display','none');
+					
+				});
+				return;
+			}
+			if(data.result[0].u_yes_transition == "end"){
+				$('.chc').each(function(i,obj){
+					
+					$(obj).css('display','none');
+					
+				});
+				
+				$scope.submitTicket = true;
+				
+			}
+			
+			
+			$scope.question = data.result[0].u_question;
+			$scope.quest_yes_msg = data.result[0].u_yes_transition;
+			$scope.question_num++;
+			$scope.questionLoaded = true;
+			$('#next').prop('disabled',false);
+			
+		}).
+		error ( function(data, status) {
+			$scope.carton = [{"u_carton_id": "Error fetching list"}];
+		});
+	};
+	
+	
+	$scope.submitShipmentTicket = function(){
+		$('#main').html("<div class='text-center'><img src='loading.gif' width='32' height='32'/></div>");
+		$scope.formatCartonForTicket();
+		
+		console.log('creating ticket for store ' +$scope.carton.u_receiving_store);
+		console.log('Sending caller ' + $scope.storeSysId);
+		$http({
+			method: 'POST',
+			url: 'https://katespade.service-now.com/api/now/table/u_shipment_incidents?sysparm_fields=number%2Csys_id',
+			headers: {
+				'X-UserToken': window.g_ck.toString(),
+				'Accept' : 'application/json',
+				'Content-type' : 'application/json'
+			},
+			data:{
+				u_type_of_issue: $scope.carton.u_type_of_issue,
+				u_name: "Not Provided",//Make Changes to ask associate for name
+				u_shp_incident_status: "0",
+				u_carton_numbers: $scope.carton.u_carton_id,
+				u_carrier: $scope.carton.u_carrier,
+				u_requested_by: $scope.storeSysId,
+				u_vendor_name: $scope.carton.u_vendor_id,
+				u_vendor_department: $scope.carton.u_vendor_department,
+				u_in_transit_delivery_date: translateDates($scope.carton.u_expected_in_store_date),
+				u_invoice_number: $scope.carton.u_invoice,
+				u_po_number: $scope.carton.u_po,
+				u_tracking_number:$scope.carton.u_tracking_id,
+				u_shipment_date:translateDates($scope.carton.u_transaction_date),
+				u_b_o_l_number: $scope.carton.u_bol_id,
+				u_channel: $scope.carton.channel
+			}
+			
+		}).success(function(data, status) {
+			var num = data.result.number;
+			var shp_tk_id = data.result.sys_id;
+			$scope.setTicketToSubmitted(shp_tk_id);
+			$scope.closeCartonRecord(true,num,shp_tk_id);
+			
+		}).error(function(data, status) {
+			$scope.carton = {"u_carton_id": "Error fetching list"};
+		});
+		
+	};
+	
+	$scope.setTicketToSubmitted = function(recId){
+		$http({
+			method: 'PATCH',
+			url: 'https://katespade.service-now.com/api/now/table/u_shipment_incidents/'+recId,
+			headers: {
+				'X-UserToken': window.g_ck.toString(),
+				'Accept' : 'application/json',
+				'Content-type' : 'application/json'
+			},
+			data:{
+				u_shp_incident_status:"1"
+			}
+		}).success(function(data, status){
+			console.log("Set carton to submited " + status);
+		}).error(function(data, status){
+			console.log("Error setting shipment ticket " + recId +" to submitted");
+			console.log("status " + status);
+		});
+	};
+	
+	$scope.formatCartonForTicket = function(){
+		console.log("Formatting Carton data for Shipment ticket");
+		
+		$scope.carton.u_vendor_id = stringArray($scope.carton.u_vendor_id);
+		$scope.carton.u_invoice = stringArray($scope.carton.u_invoice);
+		$scope.carton.u_po = stringArray($scope.carton.u_po);
+		
+		for(var i = 0; i <  $scope.carriers.length; i++){
+			
+			for(var c = 0; c < $scope.carriers[i].values.length; c++ ){
+				
+				if($scope.carton.u_carrier.toLowerCase() ==  $scope.carriers[i].values[c].toLowerCase()){
+					$scope.carton.u_carrier = $scope.carriers[i].sn_val;
+					return;
+				}
+			}
+			
+		}
+	};
+	
+	$scope.createConfirmedCarton = function(){
+		
+		$http({
+			
+			method:'POST',
+			url: $scope.url+'x_kasp_orphaned_tr_confirmed_cartons',
+			headers:{
+				'X-UserToken': window.g_ck.toString(),
+				'Content-Type': 'application/json',
+				'Accept':'application/json'
+			},
+			data:{
+				carton_id: $scope.carton_id,
+				in_transit_type: $scope.carton.u_in_transit_type,
+				to_site: "3"+$scope.carton.u_receiving_store,
+				ticket: "3"+$scope.carton.u_receiving_store,
+				status: 'ready'
+			}
+			
+		}).success(function(data,status){
+			console.log("Created Cofirm record successfully");
+		}).error(function(data,status){
+			
+		});
+	
+	};
+	
+	$scope.closeCartonRecord = function(ticket,num,shp_tk_id){
+		$(".modal-backdrop.in").css('opacity','0');
+		$(".modal-backdrop.in").css('z-index','-1000');
+		for(var i = 0; i < $scope.recordSysIds.length ;i++){
+			//console.log($scope.recordSysIds[i]);
+			$scope.sendClose($scope.recordSysIds[i],shp_tk_id);
+		}
+		if(ticket){
+			$('#main').html('<div class="box"><div class="box-head text-center row"><h4 class="thanks">Thank you for your reponse!</h4></div><div class="box-body text-center row"><p class="message">Shipment Ticket ' + num + ' has been created</p><a href="katespade.service-now.com/u_shipment_incidents.do?sys_id='+shp_tk_id+'">Click here to view ticket</a><br/><a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Back To Cartons In-Transit Page'+'</a></div></div>');
+		}else{
+			$scope.createConfirmedCarton();
+			$('#main').html('<div class="box"><div class="box-head text-center row"><h4 class="thanks">Thank you for your reponse!</h4></div><div class="box-body text-center row"><p class="message">This ticket has been closed</p><a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Back To Cartons In-Transit Page'+'</a></div></div>');
+		}
+	};
+	
+	$scope.sendClose = function(recId,shp_tk_id){
+		console.log("Shipment ticket " + recId);
+		$http({
+			method: 'PATCH',
+			url: $scope.url + 'u_in_transit_cartons/'+recId,
+			headers: {
+				'X-UserToken': window.g_ck.toString(),
+				'Accept' : 'application/json',
+				'Content-type' : 'application/json'
+			},
+			data:{
+				u_status:'complete_sn',
+				u_shipment_ticket: shp_tk_id
+			}
+		}).success(function(data,status){
+			
+		}).error(function(data,status){
+			
+		});
+		
+	};
+	
+	$scope.back = function(){
+		$scope.question_num--;
+		$scope.question_num--;
+		$scope.submitTicket = false;
+		$scope.closeRecord = false;
+		$scope.inYesTransition = false;
+		$scope.nextQuestion();
+		$('.chc').each(function(i,obj){
+			
+			$(obj).css('display','block');
+			
+		});
+		
+	};
+	
+	
+	$scope.getShipmentTicket = function(shp_inc, message,title){
+		
+		$http({
+			method:"GET",
+			url: shp_inc.link,
+			headers:{
+				'X-UserToken': window.g_ck.toString()
+				
+			}
+		}).success(function(data,status){
+			
+			console.log("SHIPMENT INC");
+			console.log(data);
+			$scope.shipment_inc_num = data.result.number;
+			$('#main').html('<div class="box"><div class="box-head text-center row"><h4 class="thanks">'+title+'</h4></div><div class="box-body text-center row"><p class="message">'+message+'<br> ' +$scope.shipment_inc_num +' has been created </p><a href="katespade.service-now.com/u_shipment_incidents.do?sys_id='+shp_inc.value+'">Click here to view ticket</a><br/><a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Back To Cartons In-Transit Page'+'</a></div></div>');
+			
+		}).error(function(data,status){
+			
+		});
+		
+	};
+	
+	$("#confirm_close").click(function(){
+		$scope.closeCartonRecord(false);
+	});
+	
+	$scope.getCarriers();
+	$scope.getCartonRecord();
+	
+}]);
+
+function stringArray(array){
+	
+	var temp = "";
+	for(var i = 0; i < array.length; i++){
+		temp += array[i];
+		if(array.length - i > 1 ){
+			temp+= ",";
+		}
+	}
+	
+	return temp;
+	
+}
+
+function translateDates(date){
+	var brkDate = date.split("-");
+	if(brkDate.length != 3){
+		return date;
+	}
+	var day = brkDate[0];
+	var month;
+	var strMonth = brkDate[1];
+	var year = "20"+brkDate[2];
+	
+	if(strMonth.toLowerCase() == "jan"){
+		month = "01";
+	}
+	if(strMonth.toLowerCase() == "feb"){
+		month = "02";
+	}
+	if(strMonth.toLowerCase() == "mar"){
+		month = "03";
+	}
+	if(strMonth.toLowerCase() == "apr"){
+		month = "04";
+	}
+	if(strMonth.toLowerCase() == "may"){
+		month = "05";
+	}
+	if(strMonth.toLowerCase() == "jun"){
+		month = "06";
+	}
+	if(strMonth.toLowerCase() == "jul"){
+		month = "07";
+	}
+	if(strMonth.toLowerCase() == "aug"){
+		month = "08";
+	}
+	if(strMonth.toLowerCase() == "sep"){
+		month = "09";
+	}
+	if(strMonth.toLowerCase() == "oct"){
+		month = "10";
+	}
+	if(strMonth.toLowerCase() == "nov"){
+		month = "11";
+	}
+	if(strMonth.toLowerCase() == "dec"){
+		month = "12";
+	}
+	return year+"-"+month+"-"+day;
+}
+
+function getParmVal(name){
+	var url = document.URL.parseQuery();
+	if(url[name]){
+		return decodeURI(url[name]);
+	}
+	else{
+		return null;
+	}
+}
+
+function arrayContains(array, ele){
+	
+	for(var i = 0; i < array.length; i++){
+		if(array[i] == ele){
+			return true;
+		}
+	}
+	return false;
+	
+}]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_kasp_orphaned_tr_in_transit_carton.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<g:requires name="my_jquery_min.jsdbx"/>
+	<g:requires name="my_jquery_ui_min.jsdbx"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
+	<style>
+		.box{
+			
+			margin: 20px 0px 0px 0px; 
+			border-style:solid;
+			border-top-left-radius: 10px;
+			border-top-right-radius: 10px;
+			border-bottom-left-radius: 5px;
+			border-bottom-right-radius: 5px;
+			border-color: #12950D;
+			overflow:hidden;
+			
+		}
+		
+		.box-head{
+			height: 45px;
+			background-color: #12950D;
+			border-color: #12950D;
+			vertical-align: top;
+			
+		}
+		
+		.box-body{
+			padding: 10px 20px 10px 20px;
+		}
+		
+		.box_title{
+			font-family:"Calibri";
+			font-size:30px;
+			font-style: italic;
+			color: white;
+		}
+		
+		.field{
+			font-size:20px;
+			font-wight:bold;
+			text-align:center;
+			margin-bottom:20px;
+			vertical-align:middle;
+		}
+		
+		.field_label{
+			font-family:"Calibri";
+			font-size:20px;
+			font-style: italic;
+		}
+		
+		.message{
+			font-family:"Calibri";
+			font-size:22px;
+			font-weight:bold;
+			font-style: italic;
+		}
+		
+		
+		.thanks{
+			font-family:"Calibri";
+			font-size:30px;
+			font-style: italic;
+			color: white;
+			
+		}
+		#buttons_container{
+			margin-top:10px;
+		}
+		#separator{
+			max-width:100%;
+			width:auto;
+		
+		}
+		
+		.confirm-header{
+			background-color:#12950D;
+			color:white;
+		}
+		
+	</style>
+	
+	<div id="main" ng-app="inTransitPage" >
+		
+		<div ng-controller="inTransitController" >
+			<div ng-show='isLoaded'>
+				<div class="col-lg-12 col-md-12 col-sm-12">
+					<div class="col-lg-2 col-md-1 col-sm-0"></div>
+					<div class="box col-lg-8 col-md-10 col-sm-12">
+						<div class="box-head text-center row">
+							<h4 class="box_title">Store {{carton.u_receiving_store}} </h4>
+						</div>
+
+						<div class="box-body text-center row">
+							<p class="message">The carton below is open in-transit and needs to be addressed. </p>
+							<p class="message" ng-show="delivered" style="color:#FF4132">This carton is showing as delivered by the carrier in the system.</p>
+							<p class="message">	DO NOT blind receive the carton. Select option below for required next steps:
+							</p>
+
+							<img id="separator" src="LineSeparatorSpade.png"  height="62"/>
+							<p class="message" >Details</p>
+							<div class='col-md-6'>
+
+								<p class="field_label">Carton</p> 
+								<input readonly="" class="form-control field" value="{{carton.u_carton_id}}"></input>
+
+								<p class="field_label">Carrier </p>
+								<input readonly="" class="form-control field" value="{{carton.u_carrier}}"></input>
+
+							</div>
+							<div class='col-md-6'>
+
+								<p class="field_label">Vendor</p>
+								<input readonly="" class="form-control field" value="{{carton.u_vendor_id[0]}}"></input>
+
+								<p class="field_label">Expected In-Store Date</p>
+								<input readonly="" class="form-control field" value="{{carton.u_expected_in_store_date}}"></input>
+
+							</div>
+							<div class='col-md-12'>
+								<p></p>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-2 col-md-1 col-sm-0"></div>
+				</div>
+				<div class="col-lg-12 col-md-12 col-sm-12">
+					<div class="col-lg-2 col-md-1 col-sm-0"></div>
+					<div class="box col-lg-8 col-md-10 col-sm-12" ng-show='questionStarted'>
+						<div class="box-head text-center row">
+
+						</div>
+
+						<div class="box-body text-center row">
+							<img ng-show='!questionLoaded' src="loading.gif" width="32" height="32"/>
+							<div ng-show='questionLoaded' >
+								<p class="message">
+									{{question}}
+								</p>
+								<div class='btn-group'>
+									<button id="yes" class="btn btn-default btn-md chc" ng-click="nextStep($event)">Yes</button>
+									<button id="no" class="btn btn-default btn-md chc" ng-click="nextStep($event)">No</button>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-2 col-md-1 col-sm-0"></div>
+				</div>
+				
+				<div id="buttons_container" class='col-lg-12 col-md-12 col-sm-12 text-center'>
+					<button id='next' class="btn btn-success btn-lg" ng-click="nextStep($event)" ng-show='!questionStarted'>Next Steps...</button>
+					
+					<button id='back' class="btn btn-danger btn-lg" ng-click="back()" ng-show='(questionStarted  $[AMP]$[AMP] question_num > 1)||inYesTransition'>Back</button>
+					
+					<button id='shipment' class="btn btn-default btn-lg" ng-click="submitShipmentTicket()" ng-show='submitTicket'>Submit Shipment Ticket</button>
+					<!-- ng-click='closeCartonRecord(false)' -->
+					<button id='closeRec' ng-show='closeRecord' class="btn btn-default btn-lg"  data-toggle="modal" data-target = "#confirmModal" >Confirm</button>
+				</div>
+			</div>	
+			
+			<!-- Modal -->
+		    <div class="modal fade" id="confirmModal" role="dialog">
+				<div class="modal-dialog">
+
+				  <div class="modal-content">
+					<div class="modal-header confirm-header">
+					  <button id="close_modal" type="button" class="close btn-default" data-dismiss="modal">X</button>
+					  <h3 class="modal-title">Are You Sure?</h3>
+
+					</div>
+					<div class="modal-body">
+						 <h4>Selecting "Yes" will receive the carton and close this ticket</h4>
+						
+					</div>
+					<div class="modal-footer">
+					  <button type="button" id="confirm_close" class="btn btn-default" data-dismiss="modal">Yes</button>
+					  <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+					</div>
+				  </div>
+
+				</div>
+		    </div>
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>in_transit_carton</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-07-15 20:01:11</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>4f81910f4fa86e803e3dee6d0210c75e</sys_id>
+        <sys_mod_count>347</sys_mod_count>
+        <sys_name>in_transit_carton</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_ui_page_4f81910f4fa86e803e3dee6d0210c75e</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-03-28 16:31:09</sys_updated_on>
+    </sys_ui_page>
+</record_update>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update sys_domain="global" table="sysevent_email_action">
+    <sysevent_email_action action="INSERT_OR_UPDATE">
+        <action_insert>false</action_insert>
+        <action_update>true</action_update>
+        <active>true</active>
+        <advanced_condition/>
+        <affected_field_on_event/>
+        <collection>u_in_transit_cartons</collection>
+        <condition/>
+        <content_type>text/html</content_type>
+        <description/>
+        <event_name>x_kasp_orphaned_tr.five_day_warning</event_name>
+        <event_parm_1>true</event_parm_1>
+        <event_parm_2>false</event_parm_2>
+        <exclude_delegates>false</exclude_delegates>
+        <force_delivery>false</force_delivery>
+        <from>Open In-Transit</from>
+        <generation_type>event</generation_type>
+        <group/>
+        <group_field/>
+        <importance/>
+        <include_attachments>false</include_attachments>
+        <item>event.parm1</item>
+        <item_table/>
+        <list/>
+        <list_field/>
+        <mandatory>false</mandatory>
+        <message/>
+        <message_html><![CDATA[<p><font size="4" face="times new roman,times"><span style="font-size: 12.0pt;">${mail_script:hello_store_script}</span></font></p>
+<p><font size="4" face="times new roman,times"><span style="font-size: 12.0pt;">Below you will find cartons that are open on the in-transit and need to be addressed.&nbsp;Your store must research these cartons as soon as possible to ensure inventory integrity at the store and corporate level. As a reminder, all cartons must be received in the system within 24 hours of receipt. Click on <a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Open In-Transit</a>&nbsp;to view the cartons that require research or select each carton below and follow the required next steps.&nbsp;</span></font></p>
+<p><font size="4" face="times new roman,times"><span style="font-size: 12px;">${mail_script:in_transit_cartons_email_script}</span></font></p>]]></message_html>
+        <message_list/>
+        <message_text/>
+        <name>In Transit - 5 Day Warning Cartons and LINK</name>
+        <omit_watermark>false</omit_watermark>
+        <order/>
+        <push_message_only>false</push_message_only>
+        <recipient_fields/>
+        <recipient_groups/>
+        <recipient_users>96e7c5caf58e0100649946d7569884b1,f9bfa7b000515c00779351e27127acff</recipient_users>
+        <reply_to/>
+        <send_self>true</send_self>
+        <sms_alternate/>
+        <style/>
+        <subject>Cartons Open In Transit – Final Reminder to Research </subject>
+        <subscribable>false</subscribable>
+        <sys_class_name>sysevent_email_action</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2017-03-07 16:50:03</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_domain>global</sys_domain>
+        <sys_id>f3437eae1319b6802c145ecf3244b073</sys_id>
+        <sys_mod_count>38</sys_mod_count>
+        <sys_name>In Transit - 5 Day Warning Cartons and LINK</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sysevent_email_action_f3437eae1319b6802c145ecf3244b073</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-03-20 18:57:10</sys_updated_on>
+        <sys_version>2</sys_version>
+        <template/>
+        <type>email</type>
+        <user/>
+        <user_field/>
+        <weight>0</weight>
+    </sysevent_email_action>
+</record_update>

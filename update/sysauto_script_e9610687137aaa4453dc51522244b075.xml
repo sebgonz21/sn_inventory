@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition/>
+        <conditional>false</conditional>
+        <name>Send Confirmed Cartons</name>
+        <run_as display_value="Admin ">fa14b1e9133d9a0053dc71522244b0be</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period>1970-01-01 00:30:00</run_period>
+        <run_start>2017-03-15 00:58:00</run_start>
+        <run_time>1970-01-01 05:00:00</run_time>
+        <run_type>periodically</run_type>
+        <script><![CDATA[(function(){
+	
+	
+	var sendCartons = function(cartons){
+		try{
+		
+			var endpoint = "http://vsecsntools1.katespade.net:8500";
+
+			var rest = new sn_ws.RESTMessageV2();
+			rest.setHttpMethod("post");
+			rest.setEndpoint(endpoint);
+			rest.setMIDServer('ProdMidServer2');
+			rest.setRequestBody(cartons);
+			
+			var response = rest.execute();
+
+			gs.info("Sent Confirmed cartons");
+		
+		}catch(err){
+			gs.info("Error Sending confirmed cartons " + err);
+
+		}
+	};
+	
+	var rec = new GlideRecord('x_kasp_orphaned_tr_confirmed_cartons');
+	rec.addQuery('status','ready');
+	rec.query();
+	
+	var data = {cartons:[]};
+	var carton = {};
+	if(rec.hasNext()){
+		
+		while(rec.next()){
+			carton = {
+				to_site: rec.getValue('to_site'),
+				carton_id: rec.getValue('carton_id'),
+				intransit_type: rec.getValue('in_transit_type'),
+				ticket: rec.getValue('ticket')
+			};
+
+			data.cartons.push(carton);
+
+			carton = {};
+			rec.setValue('status','processed');
+			rec.update();
+			//rec.deleteRecord();
+		}
+
+		sendCartons(global.JSON.stringify(data));
+	
+	}
+	
+})();]]></script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-11-04 20:10:22</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>e9610687137aaa4453dc51522244b075</sys_id>
+        <sys_mod_count>33</sys_mod_count>
+        <sys_name>Send Confirmed Cartons</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sysauto_script_e9610687137aaa4453dc51522244b075</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-03-15 00:57:39</sys_updated_on>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>

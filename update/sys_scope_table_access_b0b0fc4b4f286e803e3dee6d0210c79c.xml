@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_scope_table_access">
+    <sys_scope_table_access action="INSERT_OR_UPDATE">
+        <create_access>false</create_access>
+        <delete_access>false</delete_access>
+        <example_stack_trace>glide.scheduler.worker.4
+	com.glide.sys.fencing.dependency.ScopeAccessProvider$ScopeAccessCache.getCurrentStackTrace(ScopeAccessProvider.java:231)
+	com.glide.sys.fencing.dependency.ScopeAccessProvider$ScopeAccessCache.record(ScopeAccessProvider.java:200)
+	com.glide.sys.fencing.dependency.ScopeAccessProvider$ScopeAccessCache.access$100(ScopeAccessProvider.java:80)
+	com.glide.sys.fencing.dependency.ScopeAccessProvider.recordAccess(ScopeAccessProvider.java:63)
+	com.glide.sys.fencing.dependency.ScopeAccessRecorder.record(ScopeAccessRecorder.java:13)
+	com.glide.script.fencing.access.ScopedTableAccess.hasRightsTo(ScopedTableAccess.java:89)
+	com.glide.script.fencing.access.ScopedTableAccess.hasRightsToTable(ScopedTableAccess.java:39)
+	com.glide.script.fencing.ScopedGlideRecord.jsFunction_query(ScopedGlideRecord.java:157)
+	sun.reflect.GeneratedMethodAccessor1017.invoke(Unknown Source)
+	sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	java.lang.reflect.Method.invoke(Method.java:597)
+	org.mozilla.javascript.FunctionObject.doInvoke(FunctionObject.java:597)
+	org.mozilla.javascript.FunctionObject.call(FunctionObject.java:504)
+	org.mozilla.javascript.ScriptRuntime.call(ScriptRuntime.java:1227)
+	org.mozilla.javascript.gen.c93118.call(scheduled_import_set.6c6348724f682e803e3dee6d0210c758:5)
+	org.mozilla.javascript.ScriptRuntime.call(ScriptRuntime.java:1227)
+	org.mozilla.javascript.gen.c93119.call(scheduled_import_set.6c6348724f682e803e3dee6d0210c758:1)
+	org.mozilla.javascript.gen.c93119.exec(scheduled_import_set.6c6348724f682e803e3dee6d0210c758)
+	com.glide.script.ScriptEvaluator.execute(ScriptEvaluator.java:233)
+	com.glide.script.ScriptEvaluator.evaluateString(ScriptEvaluator.java:105)
+	com.glide.script.ScriptEvaluator.evaluateString(ScriptEvaluator.java:72)
+	com.glide.script.fencing.GlideScopedEvaluator.evaluateScript(GlideScopedEvaluator.java:318)
+	com.glide.script.fencing.GlideScopedEvaluator.evaluateScript(GlideScopedEvaluator.java:209)
+	com.glide.script.fencing.GlideScopedEvaluator.evaluateScript(GlideScopedEvaluator.java:188)
+	com.snc.automation.ScheduledImportJob.runScript(ScheduledImportJob.java:133)
+	com.snc.automation.ScheduledImportSetJob.runImport(ScheduledImportSetJob.java:62)
+	com.snc.automation.ScheduledImportJob.execute(ScheduledImportJob.java:45)
+	com.glide.schedule.JobExecutor.execute(JobExecutor.java:80)
+	com.glide.schedule.GlideScheduleWorker.executeJob(GlideScheduleWorker.java:191)
+	com.glide.schedule.GlideScheduleWorker.process(GlideScheduleWorker.java:135)
+	com.glide.schedule.GlideScheduleWorker.run(GlideScheduleWorker.java:57)
+</example_stack_trace>
+        <read_access>true</read_access>
+        <source_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</source_scope>
+        <sys_class_name>sys_scope_table_access</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-07-15 17:37:28</sys_created_on>
+        <sys_customer_update>false</sys_customer_update>
+        <sys_id>b0b0fc4b4f286e803e3dee6d0210c79c</sys_id>
+        <sys_mod_count>1</sys_mod_count>
+        <sys_name>u_in_transit_cartons</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_scope_table_access_b0b0fc4b4f286e803e3dee6d0210c79c</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-04-14 18:18:41</sys_updated_on>
+        <table_name>u_in_transit_cartons</table_name>
+        <target_scope display_value="Global">global</target_scope>
+        <write_access>true</write_access>
+    </sys_scope_table_access>
+</record_update>

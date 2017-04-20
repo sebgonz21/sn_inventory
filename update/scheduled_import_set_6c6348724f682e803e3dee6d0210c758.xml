@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="scheduled_import_set">
+    <scheduled_import_set action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition/>
+        <conditional>false</conditional>
+        <data_source display_value="intransit_cartons_ 2017-04-20 06:03:14">074c7b6c13127e0053dc51522244b0eb</data_source>
+        <map/>
+        <name>In-Transit Cartons Import</name>
+        <order/>
+        <parent/>
+        <post_script>(function(){&#13;
+&#13;
+    var getStoreSysId = function(storeNum){&#13;
+        var store = new GlideRecord('sys_user');&#13;
+        store.addQuery('active', true);&#13;
+        store.addQuery('first_name','Store');&#13;
+        store.addQuery('last_name',storeNum.substring(1));  &#13;
+        store.query();&#13;
+        if(store.next()){&#13;
+            return store.sys_id;&#13;
+        } &#13;
+        return null;&#13;
+    };&#13;
+&#13;
+    /**&#13;
+     * Checks if array contains given carton number&#13;
+     */&#13;
+    var hasCarton = function (array, carton){&#13;
+        for(var i = 0; i &lt; array.length; i++){&#13;
+            if(array[i] == carton){&#13;
+                return true;&#13;
+            }&#13;
+        }&#13;
+        return false;&#13;
+&#13;
+    };&#13;
+&#13;
+    gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Starting scheduled import script");&#13;
+    var rec = new GlideRecord('u_in_transit_cartons');&#13;
+    rec.addEncodedQuery('sys_created_onONToday@javascript:gs.daysAgoStart(0)@javascript:gs.daysAgoEnd(0)');&#13;
+    rec.orderBy('u_receiving_store');&#13;
+    rec.query();&#13;
+    //Build query for In Transit Cartons table&#13;
+    //Get records created today and order by receiving store&#13;
+&#13;
+    var currentStore;&#13;
+    var currentDetails = [];&#13;
+    var currentRecord;&#13;
+    var detailLine = {};&#13;
+    var carton = "";&#13;
+&#13;
+    //Check for at least one record so currentStore can be set.&#13;
+    //Load first record into currentDetails&#13;
+    if(rec.next()){&#13;
+        gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Found Records");&#13;
+        currentStore = rec.getValue('u_receiving_store');&#13;
+        currentRecord = rec;&#13;
+        carton = rec.getValue("u_carton_id")+"";&#13;
+        &#13;
+        currentDetails.push(carton);&#13;
+    }&#13;
+&#13;
+    //Loop through records if any.&#13;
+    //load all carton info into currentDetails array&#13;
+    while(rec.next()){&#13;
+        //gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- current store " + currentStore + " record store " + rec.getValue('u_receiving_store'));&#13;
+        &#13;
+        /**&#13;
+         * If current store does not match store in rec variable&#13;
+         * Get Store sys id&#13;
+         * Set the currentRecord as the last record seen for the current store&#13;
+         * Send event with parm1 store sys id and parm2 currentDetails&#13;
+         * update current store&#13;
+         * clear currentDetails&#13;
+         **/&#13;
+        if(currentStore != rec.getValue('u_receiving_store')){&#13;
+            var storeSysId = getStoreSysId(currentStore);&#13;
+            //gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Store " + currentStore + " sys_id = " + storeSysId);&#13;
+            gs.eventQueue('x_kasp_orphaned_tr.intransit_inserted',currentRecord,storeSysId ,global.JSON.stringify(currentDetails));&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Sent event for store " + currentStore);&#13;
+            currentStore = rec.getValue('u_receiving_store');&#13;
+            currentRecord = rec;&#13;
+            currentDetails = [];   &#13;
+        }&#13;
+&#13;
+        carton =  rec.getValue("u_carton_id")+"";&#13;
+&#13;
+        /** Check if currentDetails contains this carton already&#13;
+         * if not add it&#13;
+         */&#13;
+        if(!hasCarton(currentDetails, carton)){&#13;
+           &#13;
+            currentDetails.push(carton);&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Adding details to  " + currentStore);&#13;
+        }&#13;
+        &#13;
+       &#13;
+&#13;
+        /**&#13;
+         * If this is last record, send event with store sys id and current details&#13;
+         */&#13;
+        if(!rec.hasNext()){&#13;
+            var storeSysId = getStoreSysId(currentStore);&#13;
+            //gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Store " + currentStore + " sys_id = " + storeSysId);&#13;
+            gs.eventQueue('x_kasp_orphaned_tr.intransit_inserted',currentRecord, storeSysId,global.JSON.stringify(currentDetails));&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt; In Transit --- Sent event for store " + currentStore);&#13;
+        }&#13;
+    }  &#13;
+})();&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+</post_script>
+        <post_script_bool>true</post_script_bool>
+        <pre_script/>
+        <pre_script_bool>false</pre_script_bool>
+        <run_as display_value="Sebastian Gonzalez-Garcia">96e7c5caf58e0100649946d7569884b1</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period>1970-01-02 00:00:00</run_period>
+        <run_start>2020-06-30 19:41:00</run_start>
+        <run_time>1970-01-01 05:00:00</run_time>
+        <run_type>periodically</run_type>
+        <sys_class_name>scheduled_import_set</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-07-14 19:41:23</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>6c6348724f682e803e3dee6d0210c758</sys_id>
+        <sys_mod_count>105</sys_mod_count>
+        <sys_name>In-Transit Cartons Import</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>scheduled_import_set_6c6348724f682e803e3dee6d0210c758</sys_update_name>
+        <sys_updated_by>RAMSPRD</sys_updated_by>
+        <sys_updated_on>2017-04-20 10:03:14</sys_updated_on>
+        <upgrade_safe>false</upgrade_safe>
+    </scheduled_import_set>
+</record_update>

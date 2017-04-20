@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_script_email">
+    <sys_script_email action="INSERT_OR_UPDATE">
+        <name>hello_store_script</name>
+        <new_lines_to_html>false</new_lines_to_html>
+        <script><![CDATA[(function runMailScript(current, template, email, email_action, event) {
+
+    var storeSysId = event.parm1 + "";
+	var store = new GlideRecord('sys_user');
+	store.get(storeSysId);
+	template.print("Hello Store "+ store.getValue('last_name'));
+
+})(current, template, email, email_action, event);]]></script>
+        <sys_class_name>sys_script_email</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-10-26 22:34:47</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>246098d813fa2a0453dc51522244b04b</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>hello_store_script</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_script_email_246098d813fa2a0453dc51522244b04b</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-03-15 22:40:52</sys_updated_on>
+    </sys_script_email>
+</record_update>

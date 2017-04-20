@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database>
+    <element extends="sys_import_set_row" label="in-transit cartons" max_length="40" name="u_intransit_cartons" sizeclass="6039" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="INVOICE_NMBER" max_length="40" name="u_invoice_nmber" type="string"/>
+    </element>
+</database>

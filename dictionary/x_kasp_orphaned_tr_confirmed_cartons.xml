@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database>
+    <element label="Confirmed Cartons" max_length="40" name="x_kasp_orphaned_tr_confirmed_cartons" type="collection">
+        <element display="true" label="Carton ID" max_length="100" name="carton_id" type="string"/>
+        <element label="In-Transit Type" max_length="40" name="in_transit_type" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Status" max_length="40" name="status" type="string"/>
+        <element label="Ticket" max_length="100" name="ticket" type="string"/>
+        <element label="To Site" max_length="100" name="to_site" type="string"/>
+    </element>
+</database>

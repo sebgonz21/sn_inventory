@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_processor">
+    <sys_processor action="INSERT_OR_UPDATE">
+        <active>false</active>
+        <class_name/>
+        <description/>
+        <interactive>false</interactive>
+        <name>Orphaned Trans Did Not Ship Processor</name>
+        <parameters/>
+        <params_endpoint/>
+        <path>orp_trn_no_ship</path>
+        <path_endpoint>x_kasp_orphaned_tr_orp_trn_no_ship</path_endpoint>
+        <require_csrf>false</require_csrf>
+        <roles/>
+        <script><![CDATA[(function process(g_request, g_response, g_processor) {
+
+	var inc = g_request.getParameter("incNumber");
+	var rec = new GlideRecord('incident');
+	rec.addQuery('number', inc);
+	rec.query();
+	if(rec.next()){
+	
+		rec.comments = "Did Not Ship";
+		rec.update();
+		
+		var htmlReponse = "<div>"; 
+		htmlReponse += "<h2>Thank you for your reponse!</h2>";
+		htmlReponse += "<p>Incident "+ inc+ " will be updated to show items were not shipped</p>";
+		htmlReponse += "</div>";
+		g_processor.writeOutput("text/html", htmlReponse);
+	}
+	
+	
+})(g_request, g_response, g_processor);]]></script>
+        <sys_class_name>sys_processor</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-06-30 13:50:41</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>ce3c260a4f54ee403e3dee6d0210c73d</sys_id>
+        <sys_mod_count>15</sys_mod_count>
+        <sys_name>Orphaned Trans Did Not Ship Processor</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_processor_ce3c260a4f54ee403e3dee6d0210c73d</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2016-06-30 15:40:43</sys_updated_on>
+        <type>script</type>
+    </sys_processor>
+</record_update>

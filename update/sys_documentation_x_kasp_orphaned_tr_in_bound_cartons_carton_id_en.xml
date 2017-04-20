@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update>
+    <sys_documentation element="carton_id" label="Carton ID" language="en" table="x_kasp_orphaned_tr_in_bound_cartons">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>carton_id</element>
+            <help/>
+            <hint/>
+            <label>Carton ID</label>
+            <language>en</language>
+            <name>x_kasp_orphaned_tr_in_bound_cartons</name>
+            <plural>Carton IDs</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>sebgar01</sys_created_by>
+            <sys_created_on>2017-02-27 13:59:37</sys_created_on>
+            <sys_customer_update>false</sys_customer_update>
+            <sys_id>7abf7cc44f9dbe003e3dee6d0210c7f1</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Carton ID</sys_name>
+            <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+            <sys_policy/>
+            <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+            <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+            <sys_update_name>sys_documentation_x_kasp_orphaned_tr_in_bound_cartons_carton_id_en</sys_update_name>
+            <sys_updated_by>sebgar01</sys_updated_by>
+            <sys_updated_on>2017-02-27 13:59:37</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+    </sys_documentation>
+</record_update>

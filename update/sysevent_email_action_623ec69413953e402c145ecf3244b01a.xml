@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update sys_domain="global" table="sysevent_email_action">
+    <sysevent_email_action action="INSERT_OR_UPDATE">
+        <action_insert>false</action_insert>
+        <action_update>false</action_update>
+        <active>false</active>
+        <advanced_condition/>
+        <affected_field_on_event/>
+        <collection>u_in_transit_cartons</collection>
+        <condition/>
+        <content_type>text/html</content_type>
+        <description/>
+        <event_name>x_kasp_orphaned_tr.intransit_inserted</event_name>
+        <event_parm_1>true</event_parm_1>
+        <event_parm_2>false</event_parm_2>
+        <exclude_delegates>false</exclude_delegates>
+        <force_delivery>false</force_delivery>
+        <from>Open In-Transit</from>
+        <generation_type>event</generation_type>
+        <group/>
+        <group_field/>
+        <importance/>
+        <include_attachments>false</include_attachments>
+        <item>event.parm1</item>
+        <item_table/>
+        <list/>
+        <list_field/>
+        <mandatory>false</mandatory>
+        <message/>
+        <message_html><![CDATA[<p>${mail_script:hello_store_script}</p>
+<p><font size="2" face="arial,helvetica,sans-serif"><span style="font-size: 10.0pt;">Your store currently has cartons open on the in-transit report that need to be addressed.&nbsp;You must research these cartons as soon as possible to ensure inventory integrity at the store and corporate level. As a reminder, all cartons must be received in the system within 24 hours of receipt. Please select the Open In-Transit Research link below and follow the required next steps.</span></font></p>
+<p><font size="2"><span style="font-size: 11.0pt;">Click here:&nbsp;<a href="https://katespade.service-now.com/x_kasp_orphaned_tr_OpenInTransitCartons.do">Carton Open In-Transit Research</a></span></font></p>]]></message_html>
+        <message_list/>
+        <message_text/>
+        <name>In-Transit Notification ONLY LINK</name>
+        <omit_watermark>false</omit_watermark>
+        <order/>
+        <push_message_only>false</push_message_only>
+        <recipient_fields/>
+        <recipient_groups/>
+        <recipient_users>96e7c5caf58e0100649946d7569884b1,f9bfa7b000515c00779351e27127acff</recipient_users>
+        <reply_to/>
+        <send_self>true</send_self>
+        <sms_alternate/>
+        <style/>
+        <subject>Cartons Open In Transit – Research Required</subject>
+        <subscribable>false</subscribable>
+        <sys_class_name>sysevent_email_action</sys_class_name>
+        <sys_created_by>danpal01</sys_created_by>
+        <sys_created_on>2017-02-28 14:27:54</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_domain>global</sys_domain>
+        <sys_id>623ec69413953e402c145ecf3244b01a</sys_id>
+        <sys_mod_count>14</sys_mod_count>
+        <sys_name>In-Transit Notification ONLY LINK</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sysevent_email_action_623ec69413953e402c145ecf3244b01a</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2017-03-15 22:04:36</sys_updated_on>
+        <sys_version>2</sys_version>
+        <template/>
+        <type>email</type>
+        <user/>
+        <user_field/>
+        <weight>0</weight>
+    </sysevent_email_action>
+</record_update>

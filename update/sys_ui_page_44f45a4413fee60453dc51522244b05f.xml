@@ -1,0 +1,873 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[/*$(window).resize(function(){
+	if ($(window).width() < 1140) {
+		$('#wrap').css({'height':'280px','width':'400px'});
+		$('iframe').css({'-webkit-transform': 'scale(0.50)','transform':'scale(0.50)','height':'800px','width':'800px','top':'-260px',
+		'left':'-200px'});
+		
+		
+		
+	} else if ($(window).width() > 1140) {
+		$('#wrap').css({'height':'400px','width':'500px'});
+		$('iframe').css({'-webkit-transform': 'scale(0.75)','transform':'scale(0.75)','height':'1000px','width':'1000px','top':'-230px',
+		'left':'-250px'});
+		
+	} else if ($(window).width() < 1200){
+		$('#panel1,#panel2,#panel3').css({'width':'210px'});
+	} else if ($(window).width() > 1200){
+		$('#panel1,#panel2,#panel3').css({'width':'250px'});
+	}
+	
+});
+
+
+
+$(document).ready(function(){
+	if ($(window).width() < 1140) {
+		$('#wrap').css({'height':'280px','width':'400px'});
+		
+		$('iframe').css({'-webkit-transform': 'scale(0.50)','transform':'scale(0.50)','height':'800px','width':'800px','top':'-260px',
+		'left':'-200px'});
+		
+		
+	} else if ($(window).width() > 1140) {
+		$('#wrap').css({'height':'400px','width':'500px'});
+		$('iframe').css({'-webkit-transform': 'scale(0.75)','transform':'scale(0.75)','height':'1000px','width':'1000px','top':'-230px',
+		'left':'-250px'});
+	}*/
+	
+	$('[data-hover="tooltip"]').tooltip();
+
+
+$(".panel").hover(function(){
+	$(this).removeClass("panelShadow");
+	$(this).addClass('hover');},
+	function(){$(this).removeClass('hover');
+	$(this).addClass("panelShadow");}
+	
+	);
+	
+	
+	$("#inTransit").hover(function(){
+		$("#panel1").removeClass("panelShadow");
+		$("#panel1,#inTransit").addClass('hover');},
+		function(){$("#panel1,#inTransit").removeClass('hover');
+		$("#panel1").addClass("panelShadow");}
+		);
+		
+		$("#warningFive").hover(function(){
+			$("#panel2").removeClass("panelShadow");
+			$("#panel2,#warningFive").addClass('hover');},
+			function(){$("#panel2,#warningFive").removeClass('hover');
+			$("#panel2").addClass("panelShadow");}
+			);
+			
+			$("#autoClosed").hover(function(){
+				$("#panel3").removeClass("panelShadow");
+				$("#panel3,#autoClosed").addClass('hover');},
+				function(){$("#panel3,#autoClosed").removeClass('hover');
+				$("#panel3").addClass("panelShadow");}
+				);
+				
+				
+				
+				
+				
+				
+				var inTransit = angular.module('inTransit',[]);
+				
+				inTransit.controller('inTransControl',['$scope','$http',
+				function($scope,$http){
+					$scope.user = "${gs.getUser().fullName}";
+					$scope.user_sys_id = "${gs.getUserID()}";
+					
+					console.log("User ID " + $scope.user_sys_id);
+					
+					$scope.working_cartons = [];
+					$scope.five_day_warning = [];
+					$scope.recently_closed = [];
+						
+					
+					$scope.store = '3'+$scope.user.substring($scope.user.indexOf(" ")+1);
+					
+					$scope.getWorkingCartons = function(){
+						
+						$http({
+							method:'GET',
+							url:'api/now/table/u_in_transit_cartons?sysparm_query=u_receiving_store=' + $scope.store+'%5Eu_status=working%5EORDERBYu_carton_id',
+							headers:{
+								'X-UserToken':window.g_ck.toString()
+							}
+							
+						}).success(function(data,status){
+							var working = [];
+							//console.log("GOT cartons " + data.result.length);
+							for(var i = 0; i < data.result.length;i++){
+								//console.log(data.result[i].u_carton_id);
+								if(working.length > 0 && working[working.length-1].u_carton_id == data.result[i].u_carton_id){
+									continue;
+								}
+								data.result[i].u_carton_id = data.result[i].u_carton_id.substring(1);
+								working.push(data.result[i]);
+							}
+							
+							$scope.working_cartons = working;
+						}).error(function(data,status){
+							console.log("ERROR GETTING DATA >>>");
+						});
+						
+					};
+					
+					$scope.getFiveDayWarningCartons = function(){
+						
+						$http({
+							method:'GET',
+							url:'api/now/table/u_in_transit_cartons?sysparm_query=u_receiving_store=' + $scope.store+"^u_status=5_day_warning%5EORDERBYu_carton_id",
+							headers:{
+								'X-UserToken':window.g_ck.toString()
+							}
+							
+						}).success(function(data,status){
+							var five_day_warn = [];
+							
+							for(var i = 0; i < data.result.length;i++){
+								if(five_day_warn.length > 0 && five_day_warn[five_day_warn.length-1].u_carton_id == data.result[i].u_carton_id){
+									continue;
+								}
+								data.result[i].u_carton_id = data.result[i].u_carton_id.substring(1);
+								five_day_warn.push(data.result[i]);
+							}
+							
+							$scope.five_day_warning = five_day_warn;
+						}).error(function(data,status){
+							console.log("ERROR GETTING DATA >>>");
+						});
+						
+					};
+					
+					$scope.getAutoClosedCartons = function(){
+						
+						var date_obj = new Date();
+						
+						var today = date_obj.getFullYear() + "-" + (date_obj.getMonth() + 1) + "-" + date_obj.getDate();
+						
+						date_obj.setDate(date_obj.getDate() - 5);
+						var days_ago = date_obj.getFullYear() + "-" + (date_obj.getMonth() + 1) + "-" + date_obj.getDate();
+						
+						
+						$http({
+							method:'GET',
+							url: 'api/now/table/u_in_transit_cartons?sysparm_query=u_receiving_store=' + $scope.store + "%5Eu_status=auto_closed%5Esys_updated_onBETWEEN" + days_ago+"%40" + today + "%5EORDERBYu_carton_id",
+							headers:{
+								'X-UserToken':window.g_ck.toString()
+							}
+							
+						}).success(function(data,status){
+							console.log("CLOSED " + data.result.length);
+							var closed = [];
+							
+							var closed_carton = {
+								carton_data:{},
+								shp_inc_num:""
+							};
+							
+							for(var i = 0; i < data.result.length;i++){
+								
+								if(closed.length > 0 && closed[closed.length-1].carton_data.u_carton_id == data.result[i].u_carton_id){
+									continue;
+								}
+								data.result[i].u_carton_id = data.result[i].u_carton_id.substring(1);
+								
+								closed_carton.carton_data = data.result[i];
+								closed.push(closed_carton);
+								$scope.getShipmentTicket(closed,closed.length -1, closed_carton.carton_data.u_shipment_ticket);
+								
+								closed_carton = {
+									carton_data:{},
+									shp_inc_num:""
+								};
+								
+							}
+							
+							$scope.recently_closed = closed;
+							console.log("Recently Closed " + $scope.recently_closed[1].carton_data.u_carton_id);
+						}).error(function(data,status){
+							console.log("ERROR GETTING DATA >>>");
+						});
+						
+					};
+					
+					$scope.getShipmentTicket = function(arr,pos,shp){
+						var link = shp.link;
+						$http({
+							method:"GET",
+							url: link,
+							headers:{
+								'X-UserToken': window.g_ck.toString()
+								
+							}
+						}).success(function(data,status){
+							arr[pos].shp_inc_num = data.result.number;
+						}).error(function(data,status){
+							
+						});
+					};
+					$scope.getWorkingCartons();
+					$scope.getFiveDayWarningCartons();
+					$scope.getAutoClosedCartons();
+					
+					
+					
+					
+				}]);]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_kasp_orphaned_tr_shipment_home_page.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<g:requires name="my_jquery_min.jsdbx"/>
+	<g:requires name="my_jquery_ui_min.jsdbx"/>
+	<g:requires name="my_angular_min.jsdbx"/>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	
+		<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+	
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px)
+{
+	
+	div .panel{
+	height: 300px; 
+	width: 200px;
+	}
+	
+	p{ 
+	font-size:10px;
+}
+	
+	iframe{ 
+	-ms-transform:scale(0.50);
+    -moz-transform:scale(0.50);
+    -o-transform: scale(0.50);
+    -webkit-transform: scale(0.50);
+    transform:scale(0.40);
+	height:800px;
+	width:800px;
+	position:relative;
+	top:-260px;
+    left:-230px;
+	z-index:-1;
+}
+	
+	div #wrap{
+		height:280px;
+		width:400px;
+	overflow:hidden;
+	margin:auto;
+	border-style:solid;
+	border-width:1px;
+	border-color:rgba(128,128,128,0.30);
+	box-shadow:3px 1px 10px #888888;
+	z-index: -1;
+	}
+	
+}
+	
+.panel{
+	height:300px;
+	width:250px;
+	}
+
+	
+.fieldShadow a{
+	text-shadow: 0px 0px 1px #888888;
+	color:rgba(34,34,34,0.95);
+	font-weight:normal;
+	}
+
+
+	
+#wrap {
+	overflow:hidden;
+    height:400px;
+    width:500px;
+	margin:auto;
+	border-style:solid;
+	border-width:1px;
+	border-color:rgba(128,128,128,0.30);
+	box-shadow:3px 1px 10px #888888;
+	z-index: -1;
+}
+	
+iframe{ 
+	-ms-transform:scale(0.50);
+    -moz-transform:scale(0.50);
+    -o-transform: scale(0.50);
+    -webkit-transform: scale(0.75);
+    transform:scale(0.75);
+	height:1000px;
+	width:1000px;
+	position:relative;
+	top:-230px;
+    left:-250px;
+	z-index:-1;
+}
+	
+
+.panelShadow{
+	box-shadow:6px 5px 5px #888888;
+	}
+	
+.fieldShadow{
+	box-shadow:7px 7px 5px #888888;
+	}
+
+.hover{
+	 box-shadow: 0 0 20px rgba(21, 165, 207, .80); /*rgba(81, 203, 238, .95)*/
+	 border: 1px solid rgba(81, 203, 238, 1);}
+	
+	/*tool bar*/
+
+.row{
+    margin-left:0px;
+    margin-right:0px;
+}
+
+#wrapper {
+    padding-left: 70px;
+    transition: all .4s ease 0s;
+    height: 100%;
+}
+
+#sidebar-wrapper {
+    margin-left: -150px;
+    left: 70px;
+    width: 150px;
+    background: #222;
+    position: absolute;
+    height: 100%;
+    z-index: 10000;
+    transition: all .4s ease 0s;
+}
+
+.sidebar-nav {
+    display: block;
+    float: left;
+    width: 150px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#page-content-wrapper {
+    padding-left: 0;
+    margin-left: 0;
+    width: 100%;
+    height: auto;
+}
+#wrapper.active {
+    padding-left: 150px;
+}
+#wrapper.active #sidebar-wrapper {
+    left: 150px;
+}
+
+#page-content-wrapper {
+  width: 100%;
+}
+
+#sidebar_menu li a, .sidebar-nav li a {
+    color: #999;
+    display: block;
+    float: left;
+    text-decoration: none;
+    width: 150px;
+    background: #252525;
+    border-top: 1px solid #373737;
+    border-bottom: 1px solid #1A1A1A;
+    -webkit-transition: background .5s;
+    -moz-transition: background .5s;
+    -o-transition: background .5s;
+    -ms-transition: background .5s;
+    transition: background .5s;
+}
+
+.sidebar_name {
+    padding-top: 25px;
+    color: #fff;
+    opacity: .7;
+}
+
+.sidebar-nav li {
+  line-height: 40px;
+  text-indent: 20px;
+}
+
+.sidebar-nav li a {
+  color: #999999;
+  display: block;
+  text-decoration: none;
+}
+
+.sidebar-nav li a:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.2);
+  text-decoration: none;
+}
+
+.sidebar-nav li a:active,
+.sidebar-nav li a:focus {
+  text-decoration: none;
+}
+
+.sidebar-nav > .sidebar-brand {
+  height: 65px;
+  line-height: 60px;
+  font-size: 18px;
+}
+
+.sidebar-nav > .sidebar-brand a {
+  color: #999999;
+}
+
+.sidebar-nav > .sidebar-brand a:hover {
+  color: #fff;
+  background: none;
+}
+
+#main_icon{
+    float:right;
+   padding-right: 65px;
+   padding-top:20px;
+}
+
+.sub_icon{
+    float:right;
+   padding-right: 65px;
+   padding-top:10px;
+}
+
+.content-header {
+  height: 65px;
+  line-height: 65px;
+}
+
+.content-header h1 {
+  margin: 0;
+  margin-left: 20px;
+  line-height: 65px;
+  display: inline-block;
+}
+
+
+#sidebar-wrapper {
+    left: 70px;
+}
+
+#wrapper.active {
+    padding-left: 150px;
+}
+
+#wrapper.active #sidebar-wrapper {
+    left: 150px;
+    width: 150px;
+    transition: all .4s ease 0s;
+}
+
+/*tool bar end*/
+	
+.numberCircle {
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+	padding:8px;
+    border: 1px solid #666;
+    color: white;
+	box-shadow:3px 1px 10px #888888;
+	text-align:center;
+}
+
+body{
+	font-family: futura;
+}
+	
+ol li{
+
+	font-size: 14px;
+}
+	
+::-webkit-scrollbar{
+	width: 8px;
+	height: 0px;
+
+}
+::-webkit-scrollbar-button {
+	width: 0px;
+	height: 0px;
+}
+::-webkit-scrollbar-thumb {
+	background: #7e7e7e;
+	border: 94px none #ffffff;
+	border-radius: 46px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: #a8a8a8;
+}
+::-webkit-scrollbar-thumb:active {
+	background: #7e7e7e;
+}
+::-webkit-scrollbar-track {
+	background: #bdbdbd;
+	border: 42px none #ffffff;
+	border-radius: 43px;
+
+}
+
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+
+
+	
+	
+.main_header {
+	margin-left:25px;
+	font-family: futura;
+    font-weight: normal;
+    font-style: normal;
+    letter-spacing: 1px;
+    font-size: 18px;
+    text-transform: capitalize;
+    color: white;
+    text-align: left;
+}
+
+.main_header_container{
+	width: 100%;
+	margin: 0;
+	background-color:rgba(34,34,34,0.95);
+	height:45px;
+	z-index:10001;
+}
+	
+	
+	
+#welcome{
+	float:right;
+	padding-right:50px;
+	font-size:16px;
+	font-weight:bold;
+}
+	
+footer{
+	margin:0 auto;
+	bottom: 0;
+	left: 0;
+	right:0;
+	background-color:;
+	width:100%;
+	height:40px;
+	color: black;
+	text-align: center;
+	border-top:solid black;
+	border-width: thin;
+}
+	
+#welcomeSection{
+	width: 500px;
+	height:200px;
+	font-weight:normal;
+	font-size:22px;
+	border-width: thin;
+	border-bottom: solid;
+	text-align: center;
+	margin: auto;
+	margin-top: 100px;
+	position:relative;
+	font-family: arial bold;
+	line-height: 40px;
+	margin-bottom:200px;
+}
+	
+.fade{
+    opacity: .90;
+    -webkit-transition: opacity 1s linear;
+    transition: opacity 1s linear;
+	}
+	
+#panel1{
+	overflow:auto;
+	border-style:solid;
+	border-width:1px;
+	border-color:rgba(128,128,128,0.30);
+	padding:0; 
+	margin-right:40px;
+}
+
+</style>		
+		
+	<g2:evaluate var="jvar_last" jelly="true">
+		var store = gs.getUser().getFullName();
+		var store_sys_id = gs.getUserID();
+	</g2:evaluate>
+		
+	<body ng-app="inTransit" ng-controller="inTransControl" style = "background-color: rgba(0,0,0,0);margin:0;padding:0;padding-bottom:0">
+		<header>
+			<div class = "main_header_container">
+			
+				<div class = "main_header">Kate Spade &amp; Company<span style = "margin-left: 300px;font-size:26px"></span> <span id = "welcome2" style = "display: inline-block;float: right;font-size:12px;margin-top:18px;">{{user}}</span>
+				</div>
+				
+			</div>
+				
+			
+				
+		</header>	
+		<!--Sidebar-->
+		
+		<div id="wrapper" class="active">
+      
+      <!-- Sidebar -->
+            <!-- Sidebar -->
+      <div id="sidebar-wrapper">
+      <ul id="sidebar_menu" class="sidebar-nav">
+           <li class="sidebar-brand"><a id="menu-toggle" href="#" style = "text-decoration:underline">In-Transit Dashboard</a></li>
+      </ul>
+        <ul class="sidebar-nav" id="sidebar">     
+          <li><a style = "font-size:10px" href = "https://katespade.service-now.com/u_shipment_incidents_list.do?sysparm_userpref_module=afa46debc0f206003ff396b2c015d719$[AMP]sysparm_query=u_requested_byDYNAMIC90d1921e5f510100a9ad2572f2b477fe^EQ" target = "_blank">Report a Shipment Issue</a></li>
+          <li><a style = "font-size:10px" href = "https://katespade.service-now.com/x_kasp_store_int_store_inventory_issues_list.do?sysparm_userpref_module=616b2708f5f4c6003ff3bd1ff6575cf5$[AMP]sysparm_query=store_numberDYNAMIC90d1921e5f510100a9ad2572f2b477fe^EQ" target="_blank">Report an Inventory Issue</a></li>
+        </ul>
+      </div>
+		
+		<!--Sidebar End-->
+		
+		<div class = "container">
+			<div class = "row" >
+		<div class="panel panel-default panelShadow col-lg-4" style = "overflow:auto;border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);border-radius:20px;float:left;margin-top:30px;">
+				
+
+<!--Carton Counter Panel -->
+			<div class="panel-heading" style = "background-color:rgba(34,34,34,0.95);color:white;text-align:center;font-size:14px;text-decoration:none">Carton Count</div>
+				
+				<div class="panel-body">
+					<div class = "fieldShadow" id = "inTransit" style = "border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);height:40px;text-align:left;padding-left:20px;padding-right:20px;padding-top:10px;font-size: 12px" data-toggle="modal" data-target="#inTran" data-hover = "tooltip" data-placement="right" title = "Click Here"><a style= "text-decoration:none" >In-Transit</a><span class = "numberCircle" style = "float:right;background-color:#2E0854">{{working_cartons.length}}</span></div>
+					<br></br>
+					<div class = "fieldShadow" id = "warningFive" style = "border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);height:40px;text-align:left;padding-left:20px;padding-right:20px;padding-top:10px;font-size: 12px" data-toggle="modal" data-target="#fiveDayModal" data-hover = "tooltip" data-placement="right" title = "Click Here"><a style= "text-decoration:none">5-Day Warning</a><span class = "numberCircle" style = "float:right;background-color:#2E0854">{{five_day_warning.length}}</span></div>
+					<br></br>
+					<div class = "fieldShadow" id = "autoClosed" style = "border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);height:40px;text-align:left;padding-left:20px;padding-right:20px;padding-top:10px;font-size: 12px" data-toggle="modal" data-target="#autoCloseModal" data-hover = "tooltip" data-placement="right" title = "Click Here"><a style= "text-decoration:none">Auto-Closed</a><span class = "numberCircle" style = "float:right; background-color:#2E0854">{{recently_closed.length}}</span></div>
+				</div>
+		</div>
+<!--Carton Counter Panel End-->
+		
+				
+<!--Right Panel -->
+		
+		<div class= "panel panel-default panelShadow col-lg-4" style = "overflow:auto;border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);border-radius:20px;float:right;margin-top:30px;margin-right:20px;">
+				
+			<div class="panel-heading" style = "background-color:rgba(34,34,34,0.95);color:white;text-align:center;font-size:14px;">To Be Determined...</div>
+				
+				<div class="panel-body">
+
+		</div>
+		</div>
+<!-- Right Panel End-->
+				
+				
+		
+		<!-- Center Graph Iframe-->
+		<div class = " col-lg-4"  style = "margin-bottom:60px;text-align:center; margin-top:40px">
+			
+				<div id = "wrap">
+				<iframe class = "blockClicks"  id="frame_name" src="https://katespade.service-now.com/sys_report_display.do?sysparm_report_id=c4ee21a00ffa22004789e34be1050e26	
+											  " scrolling="yes"></iframe> </div>
+
+		</div> <!--Center Graph Iframe End-->
+				</div>
+				</div> <!-- Container -->
+			
+			<div id = "background"></div>
+			
+			<!--Begin Bottom Three Panels -->
+		<div class = "container" >
+			
+			<!--<div class = "col-lg-1 col-md-1 col-sm-1"></div>-->
+			<div class = "row row-centered" style = 'padding-left:130px'>
+			
+			<div id = "panel1" class="panel panel-default panelShadow  col-lg-4 col-md-4 col-sm-4 .col-centered">
+				<div class="panel-heading" style = "background-color:rgba(34,34,34,0.95);color:white;text-align:center">Cartons In-Transit</div>
+				<!--<div id="collapse1" class="panel-collapse collapse">-->
+					
+				<div class="panel-body" style = "padding:0">
+					<p style = "text-decoration:underline;text-align:center">Carton Numbers</p>	<ol id = "head" ><li ng-repeat="cart in working_cartons track by $index" style = "font-family:Arial"><a target="_blank" href="https://katespade.service-now.com/x_kasp_orphaned_tr_in_transit_carton.do?sysparm_carton={{cart.u_carton_id}}$[AMP]sysparm_store={{user_sys_id}}">{{cart.u_carton_id}}</a></li></ol> </div>
+			
+					</div> <!--collapse panel -->
+			
+				<!--<div class = "col-lg-1 col-md-1 col-sm-1"></div>-->
+						
+			<!--End 1-->
+			
+				<div id = "panel2" class="panel panel-default panelShadow col-lg-4 col-md-4 col-sm-4 .col-centered" style = "overflow:auto;border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);padding:0;margin-right:40px">
+				<div class="panel-heading" style = "background-color:rgba(34,34,34,0.95);color:white;text-align:center">Cartons with 5-Day Warning</div>
+				
+				<div class="panel-body" style = "padding:0">
+					<p style="text-decoration:underline;text-align:center">Carton Numbers</p>
+					<ol id = "head2" style ="text-align:left;background-color:rgba(0,0,0,0.05)">
+						<li ng-repeat="cart in five_day_warning" style = "font-family:Arial"><a>{{cart.u_carton_id}}</a></li>
+					</ol>
+				</div>
+			
+				
+				</div>
+			
+				
+				<!--<div class = "col-lg-1 col-md-1 col-sm-1"></div>-->
+				<!--End 2-->
+			
+			<div id = "panel3" class="panel panel-default panelShadow col-lg-4 col-md-4 col-sm-4 .col-centered" style = "overflow:auto;border-style:solid;border-width:1px;border-color:rgba(128,128,128,0.30);padding:0;">
+				<div class="panel-heading" style = "background-color:rgba(34,34,34,0.95);color:white;text-align:center">Cartons Auto-Closed</div>
+				
+				<div class="panel-body" style = 'padding:0'>
+					<p style = "text-align:left;text-decoration:underline;padding-left:15px">Carton Numbers<span style="float:right;text-decoration:underline;padding-right:5px">Shipment Tickets</span></p>
+					<ol id = "head3" style = "padding-left:30px;padding-right:18px">
+						<li ng-repeat="cart in recently_closed track by $index" style = "font-size:10px;font-family:Arial;padding-right:2px">
+							<!--<a target="_blank" href="https://katespade.service-now.com/x_kasp_orphaned_tr_in_transit_carton.do?sysparm_carton={{cart.carton_data.u_carton_id}}$[AMP]sysparm_store={{user_sys_id}}">
+								{{cart.carton_data.u_carton_id}}
+							</a>
+							$[SP]$[SP] -->
+							{{cart.carton_data.u_carton_id}}
+							<a href='katespade.service-now.com/u_shipment_incidents.do?sys_id={{cart.carton_data.u_shipment_ticket.value}}' target="_blank" style = 'float:right'> 
+								{{cart.shp_inc_num}}
+							</a>
+						</li>
+					</ol>
+				</div>
+			
+			
+				
+				</div>
+				<!--<div class = "col-lg-1 col-md-1 col-sm-1"></div>-->
+			
+			</div>
+			
+		</div>
+			<!--End All Panels-->
+			
+		
+		
+		</div> <!--Sodebar Wrapper-->
+		
+		
+		
+
+<!-- Modal1 -->
+<div id="inTran" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header" style = "background-color:rgba(34,34,34,0.95);color:white">
+        <button type="button" class="close" data-dismiss="modal" style = "background-color: rgba(34,34,34,0.90); color:white; border: none">X</button>
+        <h4 class="modal-title">Cartons In-Transit</h4>
+      </div>
+      <div class="modal-body">
+		  <p>These cartons have been on your in-transit report for more than ten days. Please click the "carton links" and go through the questions thoroughly to determine if these cartons may have been received and/or if a shipment ticket must be created.</p>
+        <p style = "text-decoration:underline;text-align:center">Carton Numbers</p>
+		  <ol><li ng-repeat="cart in working_cartons" style = "font-family:Arial"><a target="_blank" href="https://katespade.service-now.com/x_kasp_orphaned_tr_in_transit_carton.do?sysparm_carton={{cart.u_carton_id}}$[AMP]sysparm_store={{user_sys_id}}">{{cart.u_carton_id}}</a></li></ol> 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--END MODAL1-->
+		
+		<!-- Modal2 -->
+<div id="fiveDayModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header" style = "background-color:rgba(34,34,34,0.95);color:white">
+        <button type="button" class="close" data-dismiss="modal" style = "background-color: rgba(34,34,34,0.90); color:white; border: none">X</button>
+        <h4 class="modal-title">Cartons with 5-Day Warning</h4>
+      </div>
+      <div class="modal-body">
+		  <p>These cartons have been on your in-transit report for more than ten days AND will be closed within 5 days if no action is taken. Please click the "carton links" and go through the questions thoroughly to determine if these cartons may have been received and/or if a shipment ticket must be created.</p>
+        <p style = "text-decoration:underline;text-align:center">Carton Numbers</p>
+		  <ol><li ng-repeat="cart in five_day_warning" style = "font-family:Arial"><a>{{cart.u_carton_id}}</a></li></ol> 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--END MODAL2-->
+		
+		<!-- Modal3 -->
+<div id="autoCloseModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header" style = "background-color:rgba(34,34,34,0.95);color:white">
+        <button type="button" class="close" data-dismiss="modal" style = "background-color: rgba(34,34,34,0.90); color:white; border: none">X</button>
+        <h4 class="modal-title">Cartons Auto-Closed</h4>
+      </div>
+      <div class="modal-body">
+		  <p>These cartons have been auto-closed and a Service-Now ticket has been created. Please click the "Shipment Ticket links" for further information and updates.</p>
+        <p style = "text-decoration:underline;text-align:left">Carton Numbers<span style="float:right;text-decoration:underline">Shipment Tickets</span></p>
+		  
+		  <ol>
+			  <li ng-repeat="cart in recently_closed track by $index" style = "font-family:Arial">
+				  <a target="_blank" href="https://katespade.service-now.com/x_kasp_orphaned_tr_in_transit_carton.do?sysparm_carton={{cart.carton_data.u_carton_id}}$[AMP]sysparm_store={{user_sys_id}}">
+					  {{cart.carton_data.u_carton_id}}
+				  </a>
+				  $[SP]$[SP]
+				  <a href='katespade.service-now.com/u_shipment_incidents.do?sys_id={{cart.carton_data.u_shipment_ticket.value}}' target="_blank"> 
+					  {{cart.shp_inc_num}}
+				  </a>
+			  </li>
+		  </ol> 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--END MODAL3-->
+		
+
+	</body>
+		
+		
+	
+<!--<g2:client_script type="user" />-->
+</j:jelly>]]></html>
+        <name>shipment_home_page</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-10-26 13:34:55</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>44f45a4413fee60453dc51522244b05f</sys_id>
+        <sys_mod_count>1022</sys_mod_count>
+        <sys_name>shipment_home_page</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_ui_page_44f45a4413fee60453dc51522244b05f</sys_update_name>
+        <sys_updated_by>danpal01</sys_updated_by>
+        <sys_updated_on>2017-01-03 19:24:43</sys_updated_on>
+    </sys_ui_page>
+</record_update>

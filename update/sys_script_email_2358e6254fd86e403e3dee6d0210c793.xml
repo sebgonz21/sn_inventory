@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_script_email">
+    <sys_script_email action="INSERT_OR_UPDATE">
+        <name>orphaned_trans_table_script</name>
+        <new_lines_to_html>true</new_lines_to_html>
+        <script><![CDATA[(function runMailScript(current, template, email, email_action, event) {
+	
+	gs.info('>>>>>>> ORPHAN STARTING EMAIL SCRIPT');
+	var store = event.parm1;
+	var textLines = event.parm2 + "";
+	
+	var lines = textLines.split("\n");
+	
+	template.print('<style>');
+	
+	template.print('table{');
+	template.print('border-collapse: collapse;');
+	template.print('}');
+	
+	template.print('td{');
+	template.print('border: 1px solid black;');
+	template.print('text-align: left;');
+	template.print('font-family:Calibri;');
+	template.print('font-size: 12px;');
+	template.print('padding:0px 5px 0px 5px;');
+	template.print('}');
+	
+	template.print('th{');
+	template.print('background-color: #4491FA;');
+	template.print('color:white;');
+	template.print('text-align: left;');
+	template.print('font-family:Calibri;');
+	template.print('font-size: 12px;');
+	template.print('font-weight: bold');
+	template.print('}');
+	
+	template.print('#submessage{');
+	template.print('font-style: italic;');
+	template.print('font-size: 10;');
+	template.print('}');
+	
+	template.print('</style>');
+	
+	
+	template.print('<table>');
+	template.print('<tr>');
+	template.print('<th>Store</th>');
+	template.print('<th>Date</th>');
+	template.print('<th>Sales Person</th>');
+	template.print('<th>Status</th>');
+	template.print('<th>Transaction Type</th>');
+	template.print('<th>Workstation ID</th>');
+	template.print('<th>Transcation #</th>');
+	template.print('<th>Quantity</th>');
+	template.print('<th>UPC</th>');
+	template.print('</tr>');
+	
+	var trans = [];
+	//Start at one to skip table headers
+	//do till minus one of length to avoid empty line created at the end of array by split
+	var length = lines.length - 1;
+	for(var i = 1; i < length; i++){
+		gs.info('>>>>>>> Looping TRANSACTIONS ' + lines[i]);
+		trans = lines[i].split(",");
+		template.print('<tr>');
+		template.print('<td>');
+		template.print(trans[0]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[1]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[2]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[3]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[4]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[5]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[6]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[7]);
+		template.print('</td>');
+		template.print('<td>');
+		template.print(trans[8]);
+		template.print('</td>');
+		template.print('</tr>');
+	}
+	
+	template.print('</table>');
+	
+ 	gs.info('>>>>>>> DONE with email script');
+	
+})(current, template, email, email_action, event);]]></script>
+        <sys_class_name>sys_script_email</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-06-29 00:14:27</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>2358e6254fd86e403e3dee6d0210c793</sys_id>
+        <sys_mod_count>23</sys_mod_count>
+        <sys_name>orphaned_trans_table_script</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_script_email_2358e6254fd86e403e3dee6d0210c793</sys_update_name>
+        <sys_updated_by>sebgar01</sys_updated_by>
+        <sys_updated_on>2016-07-01 18:30:25</sys_updated_on>
+    </sys_script_email>
+</record_update>

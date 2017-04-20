@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update>
+    <sys_documentation element="status" label="Status" language="en" table="x_kasp_orphaned_tr_in_bound_cartons">
+        <sys_documentation action="INSERT_OR_UPDATE">
+            <element>status</element>
+            <help/>
+            <hint/>
+            <label>Status</label>
+            <language>en</language>
+            <name>x_kasp_orphaned_tr_in_bound_cartons</name>
+            <plural>Status</plural>
+            <sys_class_name>sys_documentation</sys_class_name>
+            <sys_created_by>sebgar01</sys_created_by>
+            <sys_created_on>2017-03-20 14:40:35</sys_created_on>
+            <sys_customer_update>false</sys_customer_update>
+            <sys_id>6f72d13a0f6d7a004789e34be1050e34</sys_id>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>Status</sys_name>
+            <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+            <sys_policy/>
+            <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+            <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+            <sys_update_name>sys_documentation_x_kasp_orphaned_tr_in_bound_cartons_status_en</sys_update_name>
+            <sys_updated_by>sebgar01</sys_updated_by>
+            <sys_updated_on>2017-03-20 14:40:35</sys_updated_on>
+            <url/>
+            <url_target/>
+        </sys_documentation>
+    </sys_documentation>
+</record_update>

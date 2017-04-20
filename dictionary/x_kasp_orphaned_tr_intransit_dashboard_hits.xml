@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database>
+    <element label="InTransit Dashboard hits" max_length="40" name="x_kasp_orphaned_tr_intransit_dashboard_hits" type="collection"/>
+</database>

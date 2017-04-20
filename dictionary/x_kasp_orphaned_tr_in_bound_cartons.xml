@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database>
+    <element label="In Bound Cartons" max_length="40" name="x_kasp_orphaned_tr_in_bound_cartons" sizeclass="62785" type="collection">
+        <element attributes="edge_encryption_enabled=true" label="Carton ID" max_length="100" name="carton_id" type="string"/>
+        <element attributes="edge_encryption_enabled=true" label="Status" max_length="40" name="status" type="string"/>
+    </element>
+</database>

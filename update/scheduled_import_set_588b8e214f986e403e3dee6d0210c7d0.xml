@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="scheduled_import_set">
+    <scheduled_import_set action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition/>
+        <conditional>false</conditional>
+        <data_source display_value="orphan trans 2017-04-20 07:06:12">d1ba0cb813527e0053dc51522244b0c4</data_source>
+        <map/>
+        <name>Orphaned Transactions Import Sched</name>
+        <order/>
+        <parent/>
+        <post_script>(function(){&#13;
+    // check orphaned trans table for transactions&#13;
+    var trans = new GlideRecord('u_orphaned_transactions');&#13;
+    trans.orderBy('u_store');&#13;
+    trans.query();&#13;
+   &#13;
+    var currentStore;&#13;
+    var transArray = [];&#13;
+&#13;
+    //Headers for table in email&#13;
+    var headers = "Store , Date , Sales Person , Status , Transaction Type , Workstation , Transaction # , Quantity , UPC \n";&#13;
+    &#13;
+    //Variable to hold transaction details, starting with headers&#13;
+    var transDetail = headers;&#13;
+    &#13;
+    var inc;&#13;
+    &#13;
+    //If stmt is there to get currentStore value&#13;
+    if(trans.next()){&#13;
+        currentStore = trans.getValue('u_store');     &#13;
+        transDetail += currentStore + "," + getTransDetails(trans) +"\n";       &#13;
+    }else{&#13;
+        return;&#13;
+    }&#13;
+    &#13;
+    while(trans.next()){&#13;
+        &#13;
+        if(currentStore == trans.getValue('u_store')){&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Current Store " + currentStore + " ===== " +  trans.getValue('u_store'));&#13;
+            transDetail += currentStore + "," + getTransDetails(trans) + "\n";&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Adding Trans to Store " + currentStore );&#13;
+        }else{&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Current Store " + currentStore + " NOT ===== " +  trans.getValue('u_store'));&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Creating Incident for Store " + currentStore );&#13;
+            inc = new GlideRecord('incident');&#13;
+            inc.short_description = "ORPHANED TRANSACTION " + currentStore;&#13;
+            inc.cmdb_ci = '0899076d4fac2a803e3dee6d0210c77c';&#13;
+            var store_sys_id = findStoreSysId(currentStore);&#13;
+            inc.caller_id =  store_sys_id;&#13;
+            inc.assignment_group = "f3928d010a0a3c1c013b2580aca688d0";&#13;
+            //inc.caller_id = '96e7c5caf58e0100649946d7569884b1'; - Testing&#13;
+            var inc_sys_id = inc.insert();     &#13;
+            //var inc_sys_id = '7947fdb52b5ca2803ff3894319da1596';- Testing&#13;
+      &#13;
+            gs.eventQueue('x_kasp_orphaned_tr.inserted', inc, currentStore,transDetail);&#13;
+&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Created Incident for store  " + currentStore);&#13;
+            addAttachment("incident",inc_sys_id ,"ORPHANED_TRANS.csv", transDetail);&#13;
+            &#13;
+            currentStore = trans.getValue('u_store');&#13;
+            transDetail = headers +  currentStore + "," + getTransDetails(trans) + "\n";&#13;
+        }&#13;
+        if(trans.hasNext() == false){&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Last record Creating Incident for Store " + currentStore );&#13;
+            inc = new GlideRecord('incident');&#13;
+            inc.short_description = "ORPHANED TRANSACTION " + currentStore;&#13;
+            inc.cmdb_ci = '0899076d4fac2a803e3dee6d0210c77c';&#13;
+            var store_sys_id = findStoreSysId(currentStore);&#13;
+            inc.caller_id =  store_sys_id;&#13;
+            //inc.caller_id = '96e7c5caf58e0100649946d7569884b1'; - Testing&#13;
+            inc.assignment_group = "f3928d010a0a3c1c013b2580aca688d0";&#13;
+            var inc_sys_id = inc.insert();     &#13;
+            //var inc_sys_id = '7947fdb52b5ca2803ff3894319da1596'; - Testing&#13;
+&#13;
+            gs.eventQueue('x_kasp_orphaned_tr.inserted', inc, currentStore,transDetail );&#13;
+&#13;
+            gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Created Incident for store  " + currentStore);&#13;
+            addAttachment("incident",inc_sys_id ,"ORPHANED_TRANS.csv", transDetail);&#13;
+        }&#13;
+    }&#13;
+   &#13;
+})();&#13;
+&#13;
+function findStoreSysId(storeNumber){&#13;
+       gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Finding Sys Id for  Store " + storeNumber);&#13;
+       var store = new GlideRecord('sys_user');&#13;
+       store.addQuery('active', 'true');&#13;
+       store.addQuery('first_name','Store');&#13;
+       store.addQuery('last_name',storeNumber);&#13;
+       store.query();&#13;
+       store.next();&#13;
+       gs.info("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Found sys id for  " + storeNumber);&#13;
+       return store.sys_id;&#13;
+}&#13;
+function addAttachment(tableName, rec_sys_id, fileName, value ){&#13;
+       // write: function(name, id, filename, content_type, value) {&#13;
+        var att = new global.Attachment();&#13;
+        att.write(tableName, rec_sys_id, fileName, "text/csv" ,value);       &#13;
+}&#13;
+&#13;
+function getTransDetails(trans){&#13;
+        return trans.getValue('u_date') + "," + trans.getValue('u_sales_person')  + "," + &#13;
+        trans.getValue('u_transaction_status') + "," + trans.getValue('u_transaction_type')  + "," + &#13;
+        trans.getValue('u_workstation')  + "," +trans.getValue('u_transaction_no')  + "," + trans.getValue('u_quantity')  + "," +  trans.getValue('u_upc'); &#13;
+&#13;
+}&#13;
+&#13;
+</post_script>
+        <post_script_bool>true</post_script_bool>
+        <pre_script/>
+        <pre_script_bool>false</pre_script_bool>
+        <run_as display_value="Admin ">fa14b1e9133d9a0053dc71522244b0be</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period>1970-01-02 00:00:00</run_period>
+        <run_start>2026-07-31 22:07:38</run_start>
+        <run_time>1970-01-01 05:00:00</run_time>
+        <run_type>periodically</run_type>
+        <sys_class_name>scheduled_import_set</sys_class_name>
+        <sys_created_by>sebgar01</sys_created_by>
+        <sys_created_on>2016-06-28 22:08:46</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>588b8e214f986e403e3dee6d0210c7d0</sys_id>
+        <sys_mod_count>119</sys_mod_count>
+        <sys_name>Orphaned Transactions Import Sched</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>scheduled_import_set_588b8e214f986e403e3dee6d0210c7d0</sys_update_name>
+        <sys_updated_by>RAMSPRD</sys_updated_by>
+        <sys_updated_on>2017-04-20 11:06:12</sys_updated_on>
+        <upgrade_safe>false</upgrade_safe>
+    </scheduled_import_set>
+</record_update>

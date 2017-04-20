@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script><![CDATA[var inTransit = angular.module('inTransit',[]);
+
+inTransit.controller('inTransControl',['$scope','$http','$interval',
+function($scope,$http,$interval){
+	$scope.user = "${gs.getUser().fullName}";
+	$scope.user_sys_id = "${gs.getUserID()}";
+	
+	console.log("User ID " + $scope.user_sys_id);
+	
+	$scope.working_cartons = [];
+	$scope.five_day_warning = [];
+	$scope.recently_closed = [];
+	
+	
+	/*$scope.store = '3'+$scope.user.substring($scope.user.indexOf(" ")+1);*/
+	$scope.store = '33265';
+	
+	$scope.getWorkingCartons = function(){
+		
+		$http({
+			method:'GET',
+			url:'api/now/table/u_in_transit_cartons?sysparm_query=u_receiving_store=' + $scope.store+'%5Eu_status=working%5EORDERBYu_carton_id',
+			headers:{
+				'X-UserToken':window.g_ck.toString()
+			}
+			
+		}).success(function(data,status){
+			var working = [];
+			var carton = {};
+			//console.log("GOT cartons " + data.result.length);
+			for(var i = 0; i < data.result.length;i++){
+				
+				if(working.length > 0 && working[working.length-1].carton_id == data.result[i].u_carton_id.substring(1)){
+					continue;
+				}
+				
+				carton = {
+					carton_id: data.result[i].u_carton_id.substring(1),
+					in_trn_date: data.result[i].u_transaction_date,
+					expected_in_store_date: data.result[i].u_expected_in_store_date
+				};
+				
+				working.push(carton);
+			}
+			
+			$scope.working_cartons = working;
+			$scope.getFiveDayWarningCartons();
+			
+		}).error(function(data,status){
+			console.log("ERROR GETTING DATA >>>");
+		});
+		
+	};
+	
+	$scope.getFiveDayWarningCartons = function(){
+		
+		$http({
+			method:'GET',
+			url:'api/now/table/u_in_transit_cartons?sysparm_query=u_receiving_store=' + $scope.store+"^u_status=5_day_warning%5EORDERBYu_carton_id",
+			headers:{
+				'X-UserToken':window.g_ck.toString()
+			}
+			
+		}).success(function(data,status){
+			var five_day_warn = [];
+			
+			var carton = {};
+			
+			for(var i = 0; i < data.result.length;i++){
+				if(five_day_warn.length > 0 && five_day_warn[five_day_warn.length-1].carton_num == data.result[i].u_carton_id.substring(1)){
+					continue;
+				}
+				carton = {
+					carton_num: data.result[i].u_carton_id.substring(1),
+					in_trn_date: data.result[i].u_transaction_date,
+					expected_in_store_date: data.result[i].u_expected_in_store_date
+				};
+				
+				five_day_warn.push(carton);
+			}
+			
+			$scope.five_day_warning = five_day_warn;
+			$scope.getAutoClosedCartons();
+		}).error(function(data,status){
+			console.log("ERROR GETTING DATA >>>");
+		});
+		
+	};
+	
+	$scope.getAutoClosedCartons = function(){
+		
+		var date_obj = new Date();
+		
+		var today = date_obj.getFullYear() + "-" + (date_obj.getMonth() + 1) + "-" + date_obj.getDate();
+		
+		date_obj.setDate(date_obj.getDate() - 5);
+		var days_ago = date_obj.getFullYear() + "-" + (date_obj.getMonth() + 1) + "-" + date_obj.getDate();
+		
+		
+		$http({
+			method:'GET',
+			url: 'api/now/table/u_in_transit_cartons?sysparm_query=u_receiving_store=' + $scope.store + "%5Eu_status=auto_closed%5Esys_updated_onBETWEEN" + days_ago+"%40" + today + "%5EORDERBYu_carton_id",
+			headers:{
+				'X-UserToken':window.g_ck.toString()
+			}
+			
+		}).success(function(data,status){
+			console.log("CLOSED " + data.result.length);
+			var closed = [];
+			
+			var closed_carton = {};
+			
+			console.log(data);
+			for(var i = 0; i < data.result.length;i++){
+				
+				if(closed.length > 0 && closed[closed.length-1].carton_num == data.result[i].u_carton_id.substring(1)){
+					continue;
+				}
+				
+				closed_carton = {
+					carton_num: data.result[i].u_carton_id.substring(1),
+					shp_inc_link: data.result[i].u_shipment_ticket.link,
+					shp_inc_sys_id: data.result[i].u_shipment_ticket.value,
+					shp_inc_num:"",
+					in_trn_date: data.result[i].u_transaction_date,
+					expected_in_store_date: data.result[i].u_expected_in_store_date
+				};
+				
+				
+				closed.push(closed_carton);
+				
+				$scope.getShipmentTicket(closed_carton);
+				
+				
+			}
+			
+			$scope.recently_closed = closed;
+			var dataNums = {
+				"Five Day Warning": $scope.five_day_warning.length,
+				"In-Transit Over 14 Days":$scope.working_cartons.length,
+				"Assigned Shipment Tickets": $scope.recently_closed.length
+				
+			};
+			$scope.makeGraph(dataNums);
+		}).error(function(data,status){
+			console.log("ERROR GETTING DATA");
+		});
+		
+	};
+	
+	$scope.getShipmentTicket = function(closed_carton){
+		
+		var link = closed_carton.shp_inc_link;
+		$http({
+			method:"GET",
+			url: link,
+			headers:{
+				'X-UserToken': window.g_ck.toString()
+				
+			}
+		}).success(function(data,status){
+			closed_carton.shp_inc_num = data.result.number;
+		}).error(function(data,status){
+			
+		});
+	};
+	
+	$scope.getWorkingCartons();
+	$interval(function(){$scope.getWorkingCartons();},30000);
+	
+	//$scope.getFiveDayWarningCartons();
+	//$scope.getAutoClosedCartons();
+	
+	$scope.makeGraph = function(dataNums){
+		gel('cartonGraph').innerHTML='<header id = "titleGraph">Cartons Requiring Research</header><canvas id = "myCanvas"></canvas><div id="myLegend"></div>';
+		var myData={};
+		for(var d in dataNums){
+			console.log(dataNums.d);
+			
+			myData[d] = (dataNums[d] > 0) ? dataNums[d]:0;
+			//Data[d] = dataNums[d];
+		}
+		
+		
+		
+		var myCanvas = document.getElementById("myCanvas");
+		myCanvas.width = 220;
+		myCanvas.height = 215;
+		
+		var ctx = myCanvas.getContext("2d");
+		
+		function drawPieSlice(ctx,centerX, centerY, radius, startAngle, endAngle, color ){
+			ctx.fillStyle = color;
+			ctx.beginPath();
+			ctx.moveTo(centerX,centerY);
+			ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+			ctx.closePath();
+			ctx.fill();
+		}
+		
+		
+		var Piechart = function(options){
+			this.options = options;
+			this.canvas = options.canvas;
+			this.ctx = this.canvas.getContext("2d");
+			this.colors = options.colors;
+			
+			var slice_angle;
+			var val;
+			this.draw = function(){
+				var total_value = 0;
+				var color_index = 0;
+				for (var categ in this.options.data){
+					val = this.options.data[categ];
+					total_value += val;
+				}
+				
+				var start_angle = 0;
+				for (categ in this.options.data){
+					val = this.options.data[categ];
+					slice_angle = 2 * Math.PI * val / total_value;
+					
+					drawPieSlice(
+					this.ctx,
+					this.canvas.width/2,
+					this.canvas.height/2,
+					Math.min(this.canvas.width/2,this.canvas.height/2),
+					start_angle,
+					start_angle+slice_angle,
+					this.colors[color_index%this.colors.length]
+					);
+					
+					start_angle += slice_angle;
+					color_index++;
+				}
+				
+				//drawing a white circle over the chart
+				//to create the doughnut chart
+				if (this.options.doughnutHoleSize){
+					drawPieSlice(
+					this.ctx,
+					this.canvas.width/2,
+					this.canvas.height/2,
+					this.options.doughnutHoleSize * Math.min(this.canvas.width/2,this.canvas.height/2),
+					0,
+					2 * Math.PI,
+					"#ffffff"
+					);
+				}
+				
+				start_angle = 0;
+				for (categ in this.options.data){
+					val = this.options.data[categ];
+					slice_angle = 2 * Math.PI * val / total_value;
+					var pieRadius = Math.min(this.canvas.width/2,this.canvas.height/2);
+					var labelX = this.canvas.width/2 + (pieRadius / 2) * Math.cos(start_angle + slice_angle/2);
+					var labelY = this.canvas.height/2 + (pieRadius / 2) * Math.sin(start_angle + slice_angle/2);
+					
+					if (this.options.doughnutHoleSize){
+						var offset = (pieRadius * this.options.doughnutHoleSize ) / 2;
+						labelX = this.canvas.width/2 + (offset + pieRadius / 2) * Math.cos(start_angle + slice_angle/2);
+						labelY = this.canvas.height/2 + (offset + pieRadius / 2) * Math.sin(start_angle + slice_angle/2);
+						
+						
+					}
+					
+					var labelText;
+					if(val>0){
+						labelText = val;
+					//put code back below if needed	
+					if (this.options.legend){
+						color_index = 0;
+						var legendHTML = "";
+						for (categ in this.options.data){
+							legendHTML += "<div><span style='display:inline-block;width:20px;margin:2px;background-color:"+this.colors[color_index++]+";'>&nbsp;</span> "+"<span style = 'font-size:10px;'>"+categ+"</span>"+': '+"<span style = 'font-weight:bold;text-decoration:underline'>"+this.options.data[categ]+"</span></div>";
+						}
+						this.options.legend.innerHTML = legendHTML;
+					}
+					}else{
+						labelText="";
+					}
+					this.ctx.fillStyle = "white";
+					this.ctx.font = "normal 18px Gotham";
+					this.ctx.fillText(labelText,labelX,labelY);
+					start_angle += slice_angle;
+					
+					//Put code back here
+					
+				}
+				
+			};
+			
+		};
+		
+		
+		var myDougnutChart = new Piechart(
+		{
+			canvas:myCanvas,
+			data:myData,
+			colors:["#CC0000","#FF8800","#007E33"],
+			doughnutHoleSize:0.5,
+			legend:myLegend
+		}
+		);
+		
+		var allArrays = 	$scope.working_cartons+$scope.five_day_warning+$scope.recently_closed;
+		
+		if(allArrays != 0){
+			myDougnutChart.draw();
+		} else{
+			$("#myCanvas").remove();
+			$("#myLegend").remove();
+			gel('cartonGraph').innerHTML = '<p style = "font-size:60px;padding-top:100px"><span class="glyphicon glyphicon-warning-sign"></span></p><p>There are no cartons requiring research at this time.</p>';
+		}
+		
+		
+			
+	};
+	
+	var onresize = function(e) {
+   //note i need to pass the event as an argument to the function
+   width = e.target.outerWidth;
+   height = e.target.outerHeight;
+ if(width < 768 && height < 1024 || width < 1024 && height < 768 || height < 768){
+	 document.getElementById('allBody').style = 'border-style:none;box-sizing:none;height:100%';
+ }else if(width >= 1024 && height >= 768 || width >= 768 && height >= 1024 || height > 768){
+	 document.getElementById('allBody').style = 'border:double thick;box-sizing:border-box;height:100%';
+ }
+};
+window.addEventListener("resize", onresize);
+
+
+	
+}]);
+
+
+]]></client_script>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_kasp_orphaned_tr_CartonInTransitDashboard.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<g:requires name="my_jquery_min.jsdbx"/>
+	<g:requires name="my_jquery_ui_min.jsdbx"/>
+	<g:requires name="my_angular_min.jsdbx"/>
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet"></link>
+	<link href="https://fonts.googleapis.com/css?family=Libre+Baskerville" rel="stylesheet"></link>
+
+	<style>
+HTML[data-doctype=true] body[data-formName="ui_page_render"]{
+	background-color:#cfd8dc ;
+	margin:0;
+	padding:0;
+	padding-bottom:0;
+	font-family:"Baskerville",sans-serif;
+	color:#212121;
+	
+	
+	
+}
+		
+#cartonGraph {
+	overflow:hidden;
+    height:380px;
+	border-style:solid;
+	border-width:1px;
+	border-color:rgba(128,128,128,0.40);
+	text-align:center;
+	padding:20px;
+	background-color:#ffffff;
+}
+
+#titleGraph{
+		font-weight:bold;
+		margin-bottom:10px;
+		text-decoration:underline;
+		font-size:16px;
+		color:#4B515D;
+}
+		
+#myLegend{
+		text-align:left;
+}
+	
+.panelHeader{
+		background-color:#3E4551;
+		color:white;
+		text-shadow: 2px 2px 4px #000000;
+}
+		
+		
+.modal-header{
+	height:50px;	
+}
+		
+.panelBorder{
+border-color:#cfd8dc;
+}
+		
+
+.panButton{
+	float:right;
+	margin-right:100px;
+	border-style:solid;
+	border-width:thin;
+	border-color:#3E4551;
+	text-shadow: 2px 2px 4px #000000;
+
+}
+		
+#infoText{
+		/*background-color:#ffffff;*/
+		background-color:#4B515D;
+		padding:20px;
+		color:#fff;
+		font-size:14px;
+		font-weight:normal;
+		margin-top:8px;
+		border-style:solid;
+		border-width:thin;
+		border-radius:2px;
+		border-color:rgba(200,200,200,.60);
+}
+		
+#infoText header{
+		padding-bottom:8px;
+}
+
+	
+.headingStyle{
+		background-color: rgba(200,200,200,.60);
+		color:black;
+		box-shadow:3px 2px 5px #888888;
+		font-weight:bold;
+}
+		
+#myCartons{
+		border-style:solid;
+		border-color:rgba(34,34,34,0.25);
+		border-radius:4px;
+		border-width:thin;
+		box-shadow:0 5px 15px #000000;
+		text-align:center;
+		margin-bottom:20px;
+		padding:7px;
+		color:black;
+		font-weight:normal;
+		background-color:#e6e8ea; 
+		font-size:20px;
+}
+		
+h2{
+   font-size:13px;
+   font-weight:bold;
+}
+
+p{
+	font-size:14px;
+	line-height:1.90;
+}
+		
+		
+.glyphicon{
+		padding-right:2px;
+}
+
+button.btn.btn-default{
+	border:none;
+	background-color:#3E4551;
+	color:#fff;
+}
+		
+.modal-footer p{
+		text-align:left;
+}
+
+</style>
+	
+<g2:evaluate var="jvar_last" jelly="true">
+		var store = gs.getUser().getFullName();
+		var store_sys_id = gs.getUserID();
+</g2:evaluate>
+		
+<body ng-app="inTransit" ng-controller="inTransControl">
+<div id = 'allBody'>		
+<header>
+<div class  = "container">
+	<div class = 'row'>
+
+		<div><span style = "float:left;font-size:18px;padding-top:10px" class = 'glyphicon glyphicon-user'></span><span  id = "welcome2" style = "display: inline-block;float:left;font-size:12px;padding-top:10px;padding-right:6px;font-weight:bold;color:black">Welcome:{{user}}</span>
+		</div>
+
+	</div><!--row-->
+	</div>
+</header>		
+		
+<div class = "container" style = "padding-top:25px">
+<div class = "container col-lg-7 col-md-7 col-sm-7 col-xs-7" style = "border-right:double;border-width:medium;border-color:#4B515D">
+	
+	<div class = "container col-lg-12 col-md-12 col-sm-12 col-xs-12">
+		<div class = "panel panelShadow panelBorder">
+		<div class = 'panel-heading panelHeader'><h2>Cartons with Five Day Warning</h2></div>
+		<div class ='panel-body'><p><span class="glyphicon glyphicon-info-sign"></span>Selecting this option will display cartons that will be closed and received into Micros within the next 5 business days.</p>
+    <a href="#" class="btn panButton" style = 'background-color:#CC0000;color:#ffffff' data-toggle="modal" data-target="#fiveDayModal" >Select</a>
+		 </div>
+        </div>
+	</div>
+<div class = "container  col-lg-12 col-md-12 col-sm-12 col-xs-12">
+		<div class = "panel panelShadow panelBorder">
+		<div class = 'panel-heading panelHeader' ><h2>Cartons In-Transit Over 14 days</h2></div>
+		<div class ='panel-body'><p><span class="glyphicon glyphicon-info-sign"></span>Selecting this option will display cartons that have been on your in-transit report for more than 14 days and require further research.</p>
+    <a href="#" class="btn  panButton" style = 'background-color:#FF8800;color:#ffffff' data-toggle="modal" data-target="#inTran">Select</a>
+		</div>
+		</div>
+</div>
+<div class = 'container  col-lg-12 col-md-12 col-sm-12 col-xs-12'>
+		<div class = "panel panelShadow panelBorder">
+		<div class = 'panel-heading panelHeader'><h2>Cartons with Assigned Shipment Ticket</h2></div>
+		<div class = 'panel-body'><p><span class="glyphicon glyphicon-info-sign"></span>Selecting this option will display cartons that have an assigned shipment ticket and our inventory/logistics teams will further investigate.</p>
+    <a href="#" class="btn panButton" style = 'background-color:#007E33;color:#ffffff' data-toggle="modal" data-target="#autoCloseModal">Select</a>
+		</div>
+        </div>
+</div>
+			
+</div><!--Container col-lg-7/Panel Container end-->
+
+	
+<div class = "container col-lg-5 col-md-5 col-sm-5 col-xs-5">
+<div class = "container col-lg-12 col-md-12 col-sm-12 col-xs-12">
+		
+	<div id = "cartonGraph" class = "panelShadow">
+		<img src='loading.gif' width='60' height='60' style = 'margin:auto;margin-top:140px'/>
+		
+		
+		
+				
+	</div>
+	        
+		
+	<div id = "infoText" class = "panelShadow text-fluid"><header><span class = 'glyphicon glyphicon-chevron-right'></span>Aged In-Transit cartons will be displayed to show the following:</header>
+<ul style = 'font-size:11px'>
+	<li><span style ='font-weight:bold;padding-right:4px;text-decoration:underline;'>Cartons with a Five Day Warning:</span> displays open in-transit cartons that will be closed and received into micros within the next 5 business days.</li>
+	<li><span style ='font-weight:bold;padding-right:4px;text-decoration:underline;'>Cartons In-Transit Over 14 days:</span> displays open in-transit cartons that have not been received into micros.</li>
+	<li><span style ='font-weight:bold;padding-right:4px;text-decoration:underline;'>Cartons with Assigned Shipment Ticket:</span> displays cartons that have been assigned to a department for research.
+	</li>
+</ul>
+
+</div>
+</div>
+</div><!--Container col-lg-5/Iframe Container end-->
+</div><!--END MAIN CONTAINER FOR PANELS/IFRAME-->
+
+	</div><!--ALL BODY-->
+	
+<!--All Modals Begin-->
+		<!-- Modal1 -->
+<div id="inTran" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+		<!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header panelHeader">
+        <h4 class="modal-title">Cartons In-Transit Over 14 days<span style = "float:right;"><button type="button" class="btn btn-default" data-dismiss="modal"><span class = 'glyphicon glyphicon-remove'></span></button></span></h4>
+      </div>
+      <div class="modal-body">
+		  <p>These cartons have been on your in-transit report for more than 14 days. Please select a carton below. Review each question thoroughly to determine if the carton has been delivered or if a shipment ticket needs to be created.</p>
+<table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Carton Numbers:</th>
+		<th>Ship Date:</th>
+		<th>Expected In-Store Date:</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="cart in working_cartons" style = "font-family:Arial">
+        <td><a class = "links" target="_blank" href="https://katespade.service-now.com/x_kasp_orphaned_tr_in_transit_carton.do?sysparm_carton={{cart.carton_id}}$[AMP]sysparm_store={{user_sys_id}}">{{cart.carton_id}}</a></td>
+		  <td>{{cart.in_trn_date}}</td>
+		  <td>{{cart.expected_in_store_date}}</td>
+      </tr>
+    </tbody>
+  </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  <p style = 'font-size:12px;padding-top:10px'>
+*As a reminder, if a carton has been delivered you must select the "Confirm" option displayed within the questionnaire. This will receive the carton into micros and close the ticket.If you have any questions please contact our Support Center at 201-295-7878 for further assistance.
+
+</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--END MODAL1-->
+		
+		<!-- Modal2 -->
+<div id="fiveDayModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header panelHeader">
+        <h4 class="modal-title">Cartons with 5-Day Warning<span style = "float:right;"><button type="button" class="btn btn-default" data-dismiss="modal"><span class = 'glyphicon glyphicon-remove'></span></button></span></h4>
+      </div>
+      <div class="modal-body">
+		  <p>These cartons have been on your in-transit report for more than 14 days AND will be closed and received into Micros if no action is taken. Please select a carton below. Review each question thoroughly to determine if the carton has been delivered or if a shipment ticket needs to be created.</p>
+       <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Carton Numbers:</th>
+		<th>Ship Date:</th>
+		<th>Expected In-Store Date:</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="cart in five_day_warning" style = "font-family:Arial">
+        <td><a target="_blank" href="https://katespade.service-now.com/x_kasp_orphaned_tr_in_transit_carton.do?sysparm_carton={{cart.carton_num}}$[AMP]sysparm_store={{user_sys_id}}">{{cart.carton_num}}</a>
+		
+		</td>
+		<td>{{cart.in_trn_date}}</td>
+		 <td>{{cart.expected_in_store_date}}</td>
+      </tr>
+    </tbody>
+  </table>
+      </div>
+      <div class="modal-footer">
+		 
+   <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+ <p style = 'font-size:12px;padding-top:10px'>
+*As a reminder, if a carton has been delivered you must select the "Confirm" option displayed within the questionnaire. This will receive the carton into micros and close the ticket.If you have any questions please contact our Support Center at 201-295-7878 for further assistance.
+
+</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--END MODAL2-->
+		
+		<!-- Modal3 -->
+<div id="autoCloseModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header panelHeader">
+        <h4 class="modal-title">Cartons with Assigned Shipment Ticket<span style = "float:right;"><button type="button" class="btn btn-default" data-dismiss="modal"><span class = 'glyphicon glyphicon-remove'></span></button></span></h4>
+      </div>
+      <div class="modal-body">
+		  <p>These cartons have been auto-closed and a Service-Now ticket has been created. Please select the "Shipment Ticket" below for further information and updates.</p>
+        <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Carton Numbers:</th>
+		<th>Shipment Tickets:</th>
+		<th>Ship Date:</th>
+		<th>Expected In-Store Date:</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="cart in recently_closed track by $index" style = "font-family:Arial">
+        <td>
+					  {{cart.carton_num}}
+				 
+				 </td>
+		  <td>
+				  <a href='katespade.service-now.com/u_shipment_incidents.do?sys_id={{cart.shp_inc_sys_id}}' target="_blank"> 
+					  {{cart.shp_inc_num}}
+				 </a>
+		  </td>
+		  <td>
+			  {{cart.in_trn_date}}
+		  </td>
+		  <td>{{cart.expected_in_store_date}}</td>
+      </tr>
+    </tbody>
+  </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		  <p style = 'font-size:12px;padding-top:10px'>
+*As a reminder, if a carton has been delivered you must select the "Confirm" option displayed within the questionnaire. This will receive the carton into micros and close the ticket.If you have any questions, please contact our Support Center at 201-295-7878 for further assistance.
+
+</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!--END MODAL3-->
+<!--END ALL MODALS-->
+
+</body>
+</j:jelly>]]></html>
+        <name>CartonInTransitDashboard</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>danpal01</sys_created_by>
+        <sys_created_on>2017-01-04 13:25:53</sys_created_on>
+        <sys_customer_update>true</sys_customer_update>
+        <sys_id>bc123ee20f88b2c04789e34be1050e59</sys_id>
+        <sys_mod_count>1273</sys_mod_count>
+        <sys_name>CartonInTransitDashboard</sys_name>
+        <sys_package display_value="Orphaned Transactions" source="x_kasp_orphaned_tr">848aceed4f586e403e3dee6d0210c783</sys_package>
+        <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
+        <sys_scope display_value="Orphaned Transactions">848aceed4f586e403e3dee6d0210c783</sys_scope>
+        <sys_update_name>sys_ui_page_bc123ee20f88b2c04789e34be1050e59</sys_update_name>
+        <sys_updated_by>danpal01</sys_updated_by>
+        <sys_updated_on>2017-02-27 13:27:23</sys_updated_on>
+    </sys_ui_page>
+</record_update>
